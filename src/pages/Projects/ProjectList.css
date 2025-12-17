@@ -1,0 +1,149 @@
+.project-list-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.tabs {
+    display: flex;
+    background: var(--color-surface);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background-color: var(--color-bg);
+    color: var(--color-text-main);
+    font-weight: 600;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-lg);
+}
+
+.project-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.project-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-text-muted);
+}
+
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.project-client {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.project-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.project-dates {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.project-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.progress-bar {
+    height: 6px;
+    background-color: var(--color-bg);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar .fill {
+    height: 100%;
+    background-color: var(--color-text-main);
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-align: right;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.financial-mini {
+    display: flex;
+    flex-direction: column;
+}
+
+.financial-mini .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+}
+
+.financial-mini .value {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.status-badge.blue {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976D2;
+}
+
+.status-badge.orange {
+    background: rgba(255, 152, 0, 0.1);
+    color: #F57C00;
+}
+
+.status-badge.green {
+    background: rgba(76, 175, 80, 0.1);
+    color: #388E3C;
+}
+
+.status-badge.red {
+    background: rgba(244, 67, 54, 0.1);
+    color: #D32F2F;
+}

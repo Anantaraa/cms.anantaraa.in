@@ -1,0 +1,96 @@
+.reports-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reports-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+}
+
+.report-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+}
+
+.report-card.full-width {
+    grid-column: span 2;
+}
+
+.report-card h3 {
+    margin: 0 0 var(--space-lg);
+    font-size: 1rem;
+    color: var(--color-text-main);
+}
+
+.chart-container-lg {
+    width: 100%;
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.legend-item .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.metrics-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.metric-item:last-child {
+    border-bottom: none;
+}
+
+.metric-item .label {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.metric-item .value {
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+.value.success {
+    color: var(--color-success);
+}

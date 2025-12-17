@@ -1,0 +1,100 @@
+/* Shared Section Styles */
+.profitability-section,
+.invoices-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--color-text-main);
+    font-weight: 600;
+}
+
+.view-all-btn {
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+}
+
+.view-all-btn:hover {
+    text-decoration: underline;
+    color: var(--color-text-main);
+}
+
+/* Invoices Table */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.invoices-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.invoices-table th {
+    text-align: left;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.invoices-table td {
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-main);
+}
+
+.invoices-table tr:last-child td {
+    border-bottom: none;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    text-transform: capitalize;
+}
+
+.status-badge.overdue {
+    background-color: rgba(211, 47, 47, 0.1);
+    color: var(--color-danger);
+}
+
+.status-badge.pending {
+    background-color: rgba(255, 160, 0, 0.1);
+    color: var(--color-warning);
+}

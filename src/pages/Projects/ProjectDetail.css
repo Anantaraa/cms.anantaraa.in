@@ -1,0 +1,136 @@
+.project-detail-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.detail-header {
+    margin-bottom: var(--space-xl);
+}
+
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: var(--space-lg);
+}
+
+.header-main h1 {
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: -0.03em;
+}
+
+.subtitle {
+    color: var(--color-text-muted);
+    margin: 4px 0 0;
+}
+
+.status-badge-lg {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+
+.status-badge-lg.Ongoing {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.project-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-lg);
+}
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.card h3 {
+    margin: 0 0 var(--space-md);
+    font-size: 1rem;
+}
+
+.desc {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.meta-row {
+    display: flex;
+    gap: var(--space-lg);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.financial-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+}
+
+.fin-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.fin-stat .label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fin-stat .val {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.val.success {
+    color: var(--color-success);
+}
+
+.val.danger {
+    color: var(--color-danger);
+}
+
+.team-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-xs {
+    width: 28px;
+    height: 28px;
+    background: var(--color-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
