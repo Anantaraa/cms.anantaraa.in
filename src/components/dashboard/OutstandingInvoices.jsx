@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDate } from '../../utils/dateUtils';
 import './OutstandingInvoices.css';
 
 export default function OutstandingInvoices({ invoices }) {
@@ -24,7 +25,7 @@ export default function OutstandingInvoices({ invoices }) {
                             <tr key={inv.id}>
                                 <td className="font-medium">{inv.client}</td>
                                 <td className="text-muted">{inv.project}</td>
-                                <td className="text-muted">{inv.dueDate}</td>
+                                <td className="text-muted">{formatDate(inv.dueDate)}</td>
                                 <td className="text-right font-medium">₹{inv.amount.toLocaleString()}</td>
                                 <td className="text-center">
                                     <span className={`status-badge ${inv.status}`}>

@@ -168,3 +168,123 @@
     text-align: center;
     color: var(--color-text-muted);
 }
+
+.action-flex {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.menu-wrapper {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-sm);
+    z-index: 50;
+    min-width: 120px;
+}
+
+.dropdown-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    text-align: left;
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--color-text);
+}
+
+.dropdown-menu button:hover {
+    background: #F9FAFB;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: var(--radius-lg);
+    width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.modal-header button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-body p {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: var(--color-text-muted);
+}
+
+.status-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    outline: none;
+}
+
+.modal-actions {
+    padding: 16px 24px;
+    background: #F9FAFB;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn-cancel {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
