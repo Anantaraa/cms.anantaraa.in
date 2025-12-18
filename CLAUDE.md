@@ -32,6 +32,9 @@ Required environment variables in `.env`:
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 - `VITE_API_BASE_URL` - Backend REST API base URL (default: http://localhost:3000)
 
+**Date Format Convention:**
+The backend API expects all dates in `dd/mm/yyyy` format (e.g., `25/12/2025`). The frontend uses utility functions to convert between HTML date input format (YYYY-MM-DD) and API format.
+
 ## Architecture
 
 ### Authentication Flow
@@ -52,15 +55,26 @@ The app uses a two-tiered API architecture:
    - **Critical**: Backend returns snake_case, frontend uses camelCase
    - Contains mappers that transform data between conventions
    - All API calls go through `handleRequest` or `handleListRequest` helpers
-   - Endpoints organized by domain: `clients`, `projects`, `invoices`, `finance`, `dashboard`
+   - Backend wraps responses in `{ success: true, message: "...", data: {...} }` format
+   - Endpoints organized by domain: `clients`, `projects`, `invoices`, `income`, `expenses`, `reports`, `dashboard`
+   - **Date Conversion**: All dates must be converted using `formatApiDate()` before sending to API, and `formatInputDate()` when loading into forms
 
 ### Backend API Expectations
 All endpoints prefixed with `/api/v1/`:
 - `GET /clients`, `POST /clients`, `GET /clients/:id`, `PUT /clients/:id`, `DELETE /clients/:id`
 - `GET /projects`, `POST /projects`, `GET /projects/:id`, `PUT /projects/:id`, `DELETE /projects/:id`
 - `GET /invoices`, `POST /invoices`, `GET /invoices/:id`, `PUT /invoices/:id`, `DELETE /invoices/:id`
-- `GET /income`, `POST /income`
-- `GET /expenses`, `POST /expenses`
+- `GET /income`, `POST /income`, `GET /income/:id`, `PUT /income/:id`, `DELETE /income/:id`
+- `GET /expenses`, `POST /expenses`, `GET /expenses/:id`, `PUT /expenses/:id`, `DELETE /expenses/:id`
+- `GET /reports/projects/:id/summary` - Project financial summary
+- `GET /reports/clients/:id/summary` - Client financial summary
+- `GET /reports/dashboard` - Overall dashboard metrics
+
+**Key Field Names:**
+- Clients: `contact_number` (not phone)
+- Expenses: `expense_date`, `responsible_person`, `status` (no category field)
+- Income: `amount_received`, `received_date`, `payment_method`, `invoice_id`, `status`
+- All entities support `organization_id` for multi-tenancy
 
 ### Component Structure
 - **Pages** (`src/pages/`): Top-level route components organized by feature
@@ -69,8 +83,11 @@ All endpoints prefixed with `/api/v1/`:
   - `auth/`: Authentication-related components
   - `dashboard/`: KPICard, ProjectProfitability, OutstandingInvoices (uses Recharts)
   - `layout/`: Sidebar, TopHeader
+  - `common/`: RightDrawer (slide-in drawer with Escape key and overlay support)
 - **Layouts** (`src/layouts/`): MainLayout with Sidebar + TopHeader + Outlet pattern
 - **Contexts** (`src/contexts/`): React Context providers (currently AuthContext only)
+- **Utils** (`src/utils/`): Utility functions
+  - `dateUtils.js`: Date formatting functions (DD/MM/YYYY ↔ YYYY-MM-DD conversion)
 
 ### Routing
 - Uses React Router v6 with nested routes
@@ -82,6 +99,7 @@ All endpoints prefixed with `/api/v1/`:
 - Pure CSS with component-level CSS files (e.g., `Dashboard.css`, `KPICard.css`)
 - No CSS-in-JS or utility frameworks
 - Custom CSS for layout using flexbox/grid
+- Icons provided by `lucide-react` library
 
 ## Key Patterns
 
@@ -117,6 +135,53 @@ Dashboard calculates KPIs by aggregating data from multiple endpoints. Stats inc
 - Outstanding invoices (count/amount)
 - Top 5 profitable projects
 - Top 5 outstanding invoices
+
+### Status Enums (per API)
+**Client Status:**
+- `active` - Active client
+- `inactive` - Temporarily inactive
+- `archived` - Archived client
+
+**Project Status:**
+- `planned` - Project in planning phase
+- `ongoing` - Project in progress
+- `paused` - Project temporarily paused
+- `completed` - Project completed
+
+**Invoice Status:**
+- `draft` - Invoice in draft state
+- `sent` - Invoice sent to client
+- `overdue` - Payment overdue
+- `paid` - Fully paid
+- `partially_paid` - Partially paid (auto-updated when income recorded)
+
+**Expense Status:**
+- `pending` - Awaiting approval
+- `approved` - Approved but not paid
+- `rejected` - Rejected
+- `paid` - Paid
+
+**Income Status:**
+- `received` - Payment received
+- `pending` - Payment pending
+
+### Common UI Patterns
+**RightDrawer Component** (`src/components/common/RightDrawer.jsx`):
+- Slide-in drawer from right side with overlay
+- Supports Escape key to close, click overlay to close
+- Prevents background scrolling when open
+- Optional back button via `onBack` prop
+- Configurable width via `width` prop (default: 500px)
+
+**Date Handling** (`src/utils/dateUtils.js`):
+- Frontend displays dates in dd/mm/yyyy format (e.g., 25/12/2025)
+- HTML date inputs use yyyy-mm-dd format
+- Backend API expects dates in dd/mm/yyyy format
+- **Critical**: Always convert dates between formats when:
+  - Loading from API: Use `formatInputDate(apiDate)` to convert dd/mm/yyyy → yyyy-mm-dd for HTML inputs
+  - Sending to API: Use `formatApiDate(inputDate)` to convert yyyy-mm-dd → dd/mm/yyyy for API
+  - Displaying: Use `formatDisplayDate(date)` to format dates for display
+  - Default values: Use `getTodayApiDate()` for HTML date input default (returns yyyy-mm-dd)
 
 ## Deployment
 

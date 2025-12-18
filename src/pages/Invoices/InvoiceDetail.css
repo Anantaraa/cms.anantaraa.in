@@ -1,0 +1,261 @@
+/* InvoiceDetail.css - Consistent with ClientDetail.css pattern */
+
+.invoice-detail-page {
+    padding: 2rem;
+}
+
+.invoice-detail-page.drawer-mode {
+    padding: 1rem;
+}
+
+.detail-header {
+    margin-bottom: 2rem;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #6b7280;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.back-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.invoice-icon-lg {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.title-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.title-info h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: #111827;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    width: fit-content;
+}
+
+.status-badge.draft {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-badge.sent {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.overdue {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.paid {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.drawer-mode .detail-grid {
+    grid-template-columns: 1fr;
+}
+
+.info-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.info-card h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: #6b7280;
+}
+
+.info-item svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.info-item > div {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+.divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 1.5rem 0;
+}
+
+.amount-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.amount-display .currency {
+    font-size: 1.5rem;
+    color: #6b7280;
+}
+
+.amount-display .amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.related-lists {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.section-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.card-header h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.card-header svg {
+    color: #9ca3af;
+}
+
+.simple-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.item-name {
+    font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+.item-amount {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.empty-text {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+.loading-state,
+.error-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.error-state {
+    color: #dc2626;
+}

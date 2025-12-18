@@ -9,6 +9,8 @@
     /* Charcoal */
     --color-text-muted: #666666;
     /* Muted Grey */
+    --color-primary: #1A1A1A;
+    /* Primary Action Color - Charcoal */
     --color-accent: #000000;
     /* Black (Technical/Lines) */
     --color-border: #E5E5E5;
