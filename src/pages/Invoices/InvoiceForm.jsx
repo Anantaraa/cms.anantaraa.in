@@ -4,36 +4,69 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '../../services/api';
 import './InvoiceForm.css';
 
-export default function InvoiceForm() {
+export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
     const navigate = useNavigate();
+    const isEditMode = !!initialData;
     const [clients, setClients] = useState([]);
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    // Get today's date in YYYY-MM-DD format
+    const getTodayDate = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
+
     const [formData, setFormData] = useState({
-        client_id: '',
-        project_id: '',
-        date: '',
-        due_date: '',
-        amount: '',
-        status: 'pending'
+        invoice_number: initialData?.invoiceNumber || initialData?.invoice_number || '',
+        client_id: initialData?.clientId || initialData?.client_id || '',
+        project_id: initialData?.projectId || initialData?.project_id || '',
+        generated_date: initialData?.generatedDate || initialData?.generated_date || getTodayDate(),
+        due_date: initialData?.dueDate || initialData?.due_date || '',
+        amount: initialData?.amount || '',
+        status: initialData?.status || 'draft',
+        description: initialData?.description || '',
     });
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [clientsData, projectsData] = await Promise.all([
+                const [clientsData, projectsData, invoicesData] = await Promise.all([
                     api.clients.getAll(),
-                    api.projects.getAll()
+                    api.projects.getAll(),
+                    api.invoices.getAll()
                 ]);
                 setClients(clientsData);
                 setProjects(projectsData);
+
+                // Auto-generate invoice number if new mode
+                if (!isEditMode) {
+                    const nextNum = generateNextInvoiceNumber(invoicesData);
+                    setFormData(prev => ({ ...prev, invoice_number: nextNum }));
+                }
             } catch (error) {
                 console.error("Failed to load form data", error);
             }
         };
         loadData();
-    }, []);
+    }, [isEditMode]);
+
+    const generateNextInvoiceNumber = (invoices) => {
+        if (!invoices || invoices.length === 0) return 'INV-001';
+
+        // Extract numbers from "INV-XXX"
+        const numbers = invoices
+            .map(inv => {
+                const match = inv.invoiceNumber?.match(/INV-(\d+)/);
+                return match ? parseInt(match[1], 10) : 0;
+            })
+            .filter(n => !isNaN(n));
+
+        if (numbers.length === 0) return 'INV-001';
+
+        const maxNum = Math.max(...numbers);
+        return `INV-${String(maxNum + 1).padStart(3, '0')}`;
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -44,10 +77,31 @@ export default function InvoiceForm() {
         e.preventDefault();
         setLoading(true);
         try {
-            await api.invoices.create(formData);
-            navigate('/invoices');
+            // Clean payload - only send fields the backend expects
+            const payload = {
+                invoice_number: formData.invoice_number,
+                client_id: formData.client_id,
+                project_id: formData.project_id,
+                generated_date: formData.generated_date,
+                due_date: formData.due_date,
+                amount: Number(formData.amount),
+                status: formData.status,
+                description: formData.description,
+            };
+
+            if (isEditMode) {
+                await api.invoices.update(initialData.id, payload);
+            } else {
+                await api.invoices.create(payload);
+            }
+
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                navigate('/invoices');
+            }
         } catch (error) {
-            console.error('Failed to create invoice', error);
+            console.error('Failed to save invoice', error);
         } finally {
             setLoading(false);
         }
@@ -55,17 +109,31 @@ export default function InvoiceForm() {
 
     return (
         <div className="invoice-form-page">
-            <div className="page-header">
-                <button className="back-btn" onClick={() => navigate('/invoices')}>
-                    <ArrowLeft size={20} />
-                    Back
-                </button>
-                <h2>New Invoice</h2>
-            </div>
+            {!onCancel && (
+                <div className="page-header">
+                    <button className="back-btn" onClick={() => navigate('/invoices')}>
+                        <ArrowLeft size={20} />
+                        Back
+                    </button>
+                    <h2>{isEditMode ? 'Edit Invoice' : 'New Invoice'}</h2>
+                </div>
+            )}
 
-            <div className="form-container">
+            <div className={`form-container ${onCancel ? 'drawer-form' : ''}`}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-grid">
+                        <div className="form-field full-width">
+                            <label>Invoice Number</label>
+                            <input
+                                type="text"
+                                name="invoice_number"
+                                value={formData.invoice_number}
+                                onChange={handleChange}
+                                placeholder="e.g. INV-001"
+                                required
+                            />
+                        </div>
+
                         <div className="form-field">
                             <label>Client</label>
                             <select name="client_id" value={formData.client_id} onChange={handleChange} required>
@@ -86,7 +154,7 @@ export default function InvoiceForm() {
 
                         <div className="form-field">
                             <label>Invoice Date</label>
-                            <input type="date" name="date" value={formData.date} onChange={handleChange} required />
+                            <input type="date" name="generated_date" value={formData.generated_date} onChange={handleChange} required />
                         </div>
 
                         <div className="form-field">
@@ -102,18 +170,30 @@ export default function InvoiceForm() {
                         <div className="form-field">
                             <label>Status</label>
                             <select name="status" value={formData.status} onChange={handleChange}>
-                                <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
+                                <option value="draft">Draft</option>
+                                <option value="sent">Sent</option>
                                 <option value="overdue">Overdue</option>
+                                <option value="paid">Paid</option>
                             </select>
+                        </div>
+
+                        <div className="form-field full-width">
+                            <label>Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                rows={3}
+                                placeholder="Invoice specific details..."
+                            />
                         </div>
                     </div>
 
                     <div className="form-actions">
-                        <button type="button" className="btn-cancel" onClick={() => navigate('/invoices')}>Cancel</button>
+                        <button type="button" className="btn-cancel" onClick={onCancel || (() => navigate('/invoices'))}>Cancel</button>
                         <button type="submit" className="btn-save" disabled={loading}>
                             <Save size={18} />
-                            {loading ? 'Saving...' : 'Create Invoice'}
+                            {loading ? 'Saving...' : (isEditMode ? 'Update Invoice' : 'Create Invoice')}
                         </button>
                     </div>
                 </form>

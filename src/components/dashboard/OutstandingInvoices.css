@@ -94,7 +94,17 @@
     color: var(--color-danger);
 }
 
-.status-badge.pending {
-    background-color: rgba(255, 160, 0, 0.1);
-    color: var(--color-warning);
+.status-badge.sent {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+}
+
+.status-badge.draft {
+    background-color: rgba(158, 158, 158, 0.1);
+    color: #616161;
+}
+
+.status-badge.paid {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #388e3c;
 }

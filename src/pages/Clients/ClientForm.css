@@ -94,7 +94,7 @@
 }
 
 .btn-save {
-    background-color: var(--color-text-main);
+    background-color: var(--color-primary);
     color: var(--color-surface);
     border: none;
     padding: 10px 24px;

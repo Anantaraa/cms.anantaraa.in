@@ -45,56 +45,206 @@ const mappers = {
         id: data.id,
         name: data.name || 'Unknown Client',
         email: data.email || '',
-        phone: data.phone || '',
+        phone: data.contact_number || '',
+        contactNumber: data.contact_number || '',
         budget: data.budget || 0,
-        status: data.status || 'Active',
-        // Handle Supabase count: projects: [{ count: 5 }] or raw count
+        status: data.status || 'active',
         projectCount: data.projects ? (Array.isArray(data.projects) ? data.projects.length : data.projects.count) : 0,
         address: data.address || '',
-        notes: data.notes || ''
+        notes: data.notes || '',
+        referenceClientId: data.reference_client_id || null,
+        organizationId: data.organization_id || null,
+        createdAt: data.created_at || '',
+        updatedAt: data.updated_at || '',
+        // Nested Data
+        projects: Array.isArray(data.projects) ? data.projects.map(p => ({
+            id: p.id,
+            name: p.name,
+            projectValue: Number(p.project_value || 0),
+            status: p.status,
+            startDate: p.start_date || '',
+            expectedEndDate: p.expected_end_date || '',
+            location: p.location || '',
+            type: p.type || ''
+        })) : [],
+        invoices: Array.isArray(data.invoices) ? data.invoices.map(i => ({
+            id: i.id,
+            invoiceNumber: i.invoice_number,
+            amount: i.amount,
+            status: i.status,
+            projectId: i.project_id,
+            project: i.projects?.name || i.project_name || 'Unknown',
+            generatedDate: i.generated_date || '',
+            dueDate: i.due_date || '',
+            description: i.description || ''
+        })) : []
     }),
     project: (data) => ({
         id: data.id,
         name: data.name || 'Untitled Project',
-        // Flatten nested client object to string if needed
-        client: data.client?.name || data.client || 'Unknown',
+        client: data.client?.name || data.client_name || data.client || 'Unknown',
         clientId: data.client_id,
-        status: data.status || 'Planning',
-        startDate: data.start_date || data.startDate || '',
-        endDate: data.end_date || data.endDate || '',
+        clientName: data.client_name || data.clients?.name || '',
+        status: data.status || 'planned',
+        startDate: data.start_date || '',
+        expectedEndDate: data.expected_end_date || '',
+        endDate: data.expected_end_date || '',
         completion: data.completion || 0,
-        income: data.income || 0,
-        expense: data.expense || 0,
-        description: data.description || '',
+        projectValue: Number(data.project_value || 0),
+        budget: Number(data.project_value || 0),
         location: data.location || '',
         type: data.type || '',
-        team: data.team || []
+        income: Number(data.income || 0),
+        expense: Number(data.expense || 0),
+        description: data.description || '',
+        team: data.team || [],
+        totalInvoices: data.total_invoices || 0,
+        totalExpenses: data.total_expenses || 0,
+        organizationId: data.organization_id || null,
+        createdAt: data.created_at || '',
+        updatedAt: data.updated_at || '',
+        // Nested Data
+        invoices: Array.isArray(data.invoices) ? data.invoices.map(i => ({
+            id: i.id,
+            invoiceNumber: i.invoice_number,
+            amount: i.amount,
+            generatedDate: i.generated_date || '',
+            dueDate: i.due_date || '',
+            status: i.status,
+            description: i.description || '',
+            responsiblePerson: i.responsible_person || '',
+            createdAt: i.created_at || ''
+        })) : [],
+        expenses: Array.isArray(data.expenses) ? data.expenses.map(e => ({
+            id: e.id,
+            amount: e.amount,
+            description: e.description,
+            expenseDate: e.expense_date || '',
+            responsiblePerson: e.responsible_person || '',
+            status: e.status || 'approved',
+            createdAt: e.created_at || ''
+        })) : [],
+        clients: data.clients ? {
+            id: data.clients.id,
+            name: data.clients.name,
+            email: data.clients.email,
+            contactNumber: data.clients.contact_number,
+            address: data.clients.address,
+            budget: data.clients.budget,
+            status: data.clients.status,
+            createdAt: data.clients.created_at || '',
+            updatedAt: data.clients.updated_at || ''
+        } : null
     }),
     invoice: (data) => ({
         id: data.id,
+        invoiceNumber: data.invoice_number || '',
         amount: data.amount || 0,
-        date: data.date || '',
-        dueDate: data.due_date || data.dueDate || '',
-        status: data.status || 'pending',
-        client: data.client?.name || data.client || 'Unknown',
-        project: data.project?.name || data.project || 'Unknown',
-        items: data.items || []
+        generatedDate: data.generated_date || '',
+        date: data.generated_date || '',
+        dueDate: data.due_date || '',
+        status: data.status || 'draft',
+        client: data.client?.name || data.client_name || data.clients?.name || 'Unknown',
+        clientId: data.client_id,
+        clientName: data.client_name || data.clients?.name || '',
+        project: data.project?.name || data.project_name || data.projects?.name || '',
+        projectId: data.project_id,
+        projectName: data.project_name || data.projects?.name || '',
+        description: data.description || '',
+        responsiblePerson: data.responsible_person || '',
+        responsibleUserId: data.responsible_user_id || null,
+        organizationId: data.organization_id || null,
+        createdAt: data.created_at || '',
+        updatedAt: data.updated_at || '',
+        items: data.items || [],
+        // Nested client and project objects
+        clients: data.clients ? {
+            id: data.clients.id,
+            name: data.clients.name,
+            contactNumber: data.clients.contact_number,
+            address: data.clients.address,
+            budget: data.clients.budget,
+            status: data.clients.status
+        } : null,
+        projects: data.projects ? {
+            id: data.projects.id,
+            name: data.projects.name,
+            projectValue: data.projects.project_value,
+            location: data.projects.location,
+            type: data.projects.type,
+            status: data.projects.status
+        } : null
     }),
     expense: (data) => ({
         id: data.id,
-        date: data.date || '',
-        category: data.category || 'Uncategorized',
+        date: data.expense_date || '',
+        expenseDate: data.expense_date || '',
         description: data.description || '',
         amount: data.amount || 0,
-        responsible: data.responsible || ''
+        responsiblePerson: data.responsible_person || '',
+        responsibleUserId: data.responsible_user_id || null,
+        status: data.status || 'approved',
+        projectId: data.project_id || '',
+        projectName: data.project_name || data.projects?.name || '',
+        project: data.project_name || data.projects?.name || '',
+        clientId: data.project_id ? (data.projects?.client_id || data.projects?.clients?.id || '') : '',
+        client: data.projects?.clients?.name || '',
+        organizationId: data.organization_id || null,
+        createdAt: data.created_at || '',
+        updatedAt: data.updated_at || '',
+        // Nested project data
+        projects: data.projects ? {
+            id: data.projects.id,
+            name: data.projects.name,
+            startDate: data.projects.start_date || '',
+            expectedEndDate: data.projects.expected_end_date || '',
+            projectValue: data.projects.project_value || 0,
+            location: data.projects.location || '',
+            type: data.projects.type || '',
+            status: data.projects.status || '',
+            clientId: data.projects.client_id || '',
+            clients: data.projects.clients ? {
+                id: data.projects.clients.id,
+                name: data.projects.clients.name,
+                contactNumber: data.projects.clients.contact_number || '',
+                address: data.projects.clients.address || ''
+            } : null
+        } : null
     }),
     income: (data) => ({
         id: data.id,
-        date: data.date || '',
-        amount: data.amount || 0,
-        method: data.method || 'Other',
-        client: data.client?.name || data.client || 'Unknown',
-        project: data.project?.name || data.project || 'Unknown',
+        date: data.received_date || '',
+        receivedDate: data.received_date || '',
+        amount: data.amount_received || 0,
+        amountReceived: data.amount_received || 0,
+        paymentMethod: data.payment_method || '',
+        method: data.payment_method || '',
+        status: data.status || 'received',
+        description: data.description || '',
+        invoiceId: data.invoice_id || null,
+        invoiceNumber: data.invoices?.invoice_number || '',
+        client: data.invoices?.clients?.name || '',
+        project: data.invoices?.projects?.name || '',
+        organizationId: data.organization_id || null,
+        createdAt: data.created_at || '',
+        updatedAt: data.updated_at || '',
+        // Nested invoice data
+        invoices: data.invoices ? {
+            id: data.invoices.id,
+            invoiceNumber: data.invoices.invoice_number || '',
+            amount: data.invoices.amount || 0,
+            generatedDate: data.invoices.generated_date || '',
+            dueDate: data.invoices.due_date || '',
+            status: data.invoices.status || '',
+            clients: data.invoices.clients ? {
+                id: data.invoices.clients.id,
+                name: data.invoices.clients.name
+            } : null,
+            projects: data.invoices.projects ? {
+                id: data.invoices.projects.id,
+                name: data.invoices.projects.name
+            } : null
+        } : null
     })
 };
 
@@ -121,7 +271,7 @@ export const api = {
                 const notStartedProjects = projectData.filter(p => p.status === 'Planned' || p.status === 'Not Started').length;
                 const completedProjects = projectData.filter(p => p.status === 'Completed').length;
 
-                const outstandingInvoices = invoiceData.filter(i => i.status === 'pending' || i.status === 'overdue');
+                const outstandingInvoices = invoiceData.filter(i => i.status === 'sent' || i.status === 'overdue');
                 const outstandingInvoicesCount = outstandingInvoices.length;
                 const outstandingInvoicesAmount = outstandingInvoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
 
@@ -169,7 +319,7 @@ export const api = {
                 const response = await apiClient.get('/api/v1/invoices');
                 const data = response.data?.data || response.data || [];
                 return data
-                    .filter(i => i.status === 'pending' || i.status === 'overdue')
+                    .filter(i => i.status === 'sent' || i.status === 'overdue')
                     .map(mappers.invoice) // Use existing mapper
                     .slice(0, 5); // Return top 5
             } catch (error) {
@@ -206,11 +356,36 @@ export const api = {
         delete: (id) => handleRequest(apiClient.delete(`/api/v1/invoices/${id}`))
     },
 
-    // Finance
+    // Finance - Income
+    income: {
+        getAll: () => handleListRequest(apiClient.get('/api/v1/income'), mappers.income),
+        getById: (id) => handleRequest(apiClient.get(`/api/v1/income/${id}`), mappers.income),
+        create: (data) => handleRequest(apiClient.post('/api/v1/income', data), mappers.income),
+        update: (id, data) => handleRequest(apiClient.put(`/api/v1/income/${id}`, data), mappers.income),
+        delete: (id) => handleRequest(apiClient.delete(`/api/v1/income/${id}`))
+    },
+
+    // Finance - Expenses
+    expenses: {
+        getAll: () => handleListRequest(apiClient.get('/api/v1/expenses'), mappers.expense),
+        getById: (id) => handleRequest(apiClient.get(`/api/v1/expenses/${id}`), mappers.expense),
+        create: (data) => handleRequest(apiClient.post('/api/v1/expenses', data), mappers.expense),
+        update: (id, data) => handleRequest(apiClient.put(`/api/v1/expenses/${id}`, data), mappers.expense),
+        delete: (id) => handleRequest(apiClient.delete(`/api/v1/expenses/${id}`))
+    },
+
+    // Finance (Legacy - kept for backward compatibility)
     finance: {
         getIncome: () => handleListRequest(apiClient.get('/api/v1/income'), mappers.income),
         getExpenses: () => handleListRequest(apiClient.get('/api/v1/expenses'), mappers.expense),
         addExpense: (data) => handleRequest(apiClient.post('/api/v1/expenses', data), mappers.expense),
         addIncome: (data) => handleRequest(apiClient.post('/api/v1/income', data), mappers.income)
+    },
+
+    // Reports
+    reports: {
+        getProjectSummary: (id) => handleRequest(apiClient.get(`/api/v1/reports/projects/${id}/summary`)),
+        getClientSummary: (id) => handleRequest(apiClient.get(`/api/v1/reports/clients/${id}/summary`)),
+        getDashboardSummary: () => handleRequest(apiClient.get('/api/v1/reports/dashboard'))
     }
 };
