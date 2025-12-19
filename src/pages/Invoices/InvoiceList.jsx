@@ -6,6 +6,7 @@ import RightDrawer from '../../components/common/RightDrawer';
 import InvoiceDetail from './InvoiceDetail';
 import InvoiceForm from './InvoiceForm';
 import PrintableInvoice from './PrintableInvoice';
+import DateInput from '../../components/common/DateInput';
 import './InvoiceList.css';
 
 export default function InvoiceList() {
@@ -416,20 +417,18 @@ export default function InvoiceList() {
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>From</label>
-                                        <input
-                                            type="date"
+                                        <DateInput
                                             value={filters.dateFrom}
                                             onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ width: '100%' }}
                                         />
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>To</label>
-                                        <input
-                                            type="date"
+                                        <DateInput
                                             value={filters.dateTo}
                                             onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ width: '100%' }}
                                         />
                                     </div>
                                 </div>
@@ -488,11 +487,10 @@ export default function InvoiceList() {
                                         <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
                                             Payment Date <span style={{ color: 'red' }}>*</span>
                                         </label>
-                                        <input
-                                            type="date"
+                                        <DateInput
                                             value={paymentDetails.received_date}
                                             onChange={(e) => setPaymentDetails({ ...paymentDetails, received_date: e.target.value })}
-                                            style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ width: '100%' }}
                                             required
                                         />
                                     </div>

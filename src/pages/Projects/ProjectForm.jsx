@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatApiDate, formatInputDate } from '../../utils/dateUtils';
+import DateInput from '../../components/common/DateInput';
 import './ProjectForm.css';
 
 
@@ -280,8 +281,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
 
                         <div className="form-field">
                             <label>Start Date <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
-                            <input
-                                type="date"
+                            <DateInput
                                 name="start_date"
                                 value={formData.start_date}
                                 onChange={handleChange}
@@ -291,8 +291,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
 
                         <div className="form-field">
                             <label>Expected End Date <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
-                            <input
-                                type="date"
+                            <DateInput
                                 name="expected_end_date"
                                 value={formData.expected_end_date}
                                 onChange={handleChange}
@@ -469,16 +468,11 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', marginBottom: '4px' }}>
                                                     Due Date <span style={{ color: 'red' }}>*</span> <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span>
                                                 </label>
-                                                <input
-                                                    type="date"
+                                                <DateInput
                                                     value={invoice.due_date}
                                                     onChange={(e) => updateInvoice(invoice.tempId, 'due_date', e.target.value)}
                                                     style={{
-                                                        width: '100%',
-                                                        padding: '8px',
-                                                        border: '1px solid #cbd5e1',
-                                                        borderRadius: '4px',
-                                                        fontSize: '14px'
+                                                        width: '100%'
                                                     }}
                                                     required
                                                 />

@@ -9,6 +9,7 @@ import ClientDetail from '../Clients/ClientDetail'; // Needed if we want to ensu
 import ClientForm from '../Clients/ClientForm';
 import InvoiceDetail from '../Invoices/InvoiceDetail'; // Needed?
 import InvoiceForm from '../Invoices/InvoiceForm';
+import DateInput from '../../components/common/DateInput';
 import './ProjectList.css';
 
 export default function ProjectList() {
@@ -331,20 +332,18 @@ export default function ProjectList() {
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>From</label>
-                                        <input
-                                            type="date"
+                                        <DateInput
                                             value={dateFilters.dateFrom}
                                             onChange={(e) => handleDateFilterChange('dateFrom', e.target.value)}
-                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ width: '100%' }}
                                         />
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>To</label>
-                                        <input
-                                            type="date"
+                                        <DateInput
                                             value={dateFilters.dateTo}
                                             onChange={(e) => handleDateFilterChange('dateTo', e.target.value)}
-                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ width: '100%' }}
                                         />
                                     </div>
                                 </div>

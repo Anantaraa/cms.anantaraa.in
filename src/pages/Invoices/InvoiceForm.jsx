@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatApiDate, formatInputDate, getTodayApiDate } from '../../utils/dateUtils';
+import DateInput from '../../components/common/DateInput';
 import './InvoiceForm.css';
 
 export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
@@ -165,12 +166,12 @@ export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
 
                         <div className="form-field">
                             <label>Invoice Date <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
-                            <input type="date" name="generated_date" value={formData.generated_date} onChange={handleChange} required />
+                            <DateInput name="generated_date" value={formData.generated_date} onChange={handleChange} required />
                         </div>
 
                         <div className="form-field">
                             <label>Due Date <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
-                            <input type="date" name="due_date" value={formData.due_date} onChange={handleChange} required />
+                            <DateInput name="due_date" value={formData.due_date} onChange={handleChange} required />
                         </div>
 
                         <div className="form-field">

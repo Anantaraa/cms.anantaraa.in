@@ -10,13 +10,24 @@ import {
     BarChart3,
     ChevronLeft,
     ChevronRight,
-    Building2
+    Building2,
+    LogOut
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import clsx from 'clsx';
 import './Sidebar.css';
 
 export default function Sidebar() {
+    const { logout } = useAuth();
     const [collapsed, setCollapsed] = useState(false);
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (error) {
+            console.error('Failed to log out:', error);
+        }
+    };
 
     const navItems = [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -65,6 +76,13 @@ export default function Sidebar() {
                         <span className="user-role">Architect</span>
                     </div>
                 </div>
+                <button
+                    onClick={handleLogout}
+                    className="logout-btn"
+                    title="Logout"
+                >
+                    <LogOut size={20} />
+                </button>
             </div>
         </aside>
     );

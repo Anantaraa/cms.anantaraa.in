@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatApiDate, formatInputDate } from '../../utils/dateUtils';
+import DateInput from '../../components/common/DateInput';
 import './ExpenseForm.css';
 
 export default function ExpenseForm({ onSuccess, onCancel, initialData }) {
@@ -77,8 +78,7 @@ export default function ExpenseForm({ onSuccess, onCancel, initialData }) {
                 <div className="form-grid">
                     <div className="form-field">
                         <label>Date * <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
-                        <input
-                            type="date"
+                        <DateInput
                             name="expense_date"
                             value={formData.expense_date}
                             onChange={handleChange}

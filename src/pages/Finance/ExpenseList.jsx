@@ -5,6 +5,7 @@ import { formatDate } from '../../utils/dateUtils';
 import RightDrawer from '../../components/common/RightDrawer';
 import ExpenseForm from './ExpenseForm';
 import ExpenseDetail from './ExpenseDetail';
+import DateInput from '../../components/common/DateInput';
 import './Finance.css';
 
 export default function ExpenseList() {
@@ -316,20 +317,18 @@ export default function ExpenseList() {
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>From</label>
-                                        <input
-                                            type="date"
+                                        <DateInput
                                             value={filters.dateFrom}
                                             onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ width: '100%' }}
                                         />
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>To</label>
-                                        <input
-                                            type="date"
+                                        <DateInput
                                             value={filters.dateTo}
                                             onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ width: '100%' }}
                                         />
                                     </div>
                                 </div>
