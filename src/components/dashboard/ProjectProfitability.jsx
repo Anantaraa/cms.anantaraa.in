@@ -2,7 +2,7 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import './ProjectProfitability.css';
 
-export default function ProjectProfitability({ data }) {
+export default function ProjectProfitability({ data, onProjectClick }) {
     return (
         <div className="profitability-section">
             <div className="section-header">
@@ -10,7 +10,16 @@ export default function ProjectProfitability({ data }) {
             </div>
             <div className="chart-container">
                 <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <BarChart
+                        data={data}
+                        margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                        onClick={(e) => {
+                            if (e && e.activePayload && e.activePayload[0] && onProjectClick) {
+                                onProjectClick(e.activePayload[0].payload);
+                            }
+                        }}
+                        style={{ cursor: onProjectClick ? 'pointer' : 'default' }}
+                    >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                         <XAxis
                             dataKey="name"

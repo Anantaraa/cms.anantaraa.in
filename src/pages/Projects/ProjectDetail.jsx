@@ -78,9 +78,14 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
     }, [id, projectData]);
 
     // --- Navigation Handlers ---
-    const handleViewClient = () => {
+    const handleViewClient = async () => {
         if (project.clientId && onNavigate) {
-            onNavigate('client', { id: project.clientId });
+            try {
+                const clientData = await api.clients.getById(project.clientId);
+                onNavigate('client', clientData);
+            } catch (error) {
+                console.error("Failed to load client", error);
+            }
         } else {
             console.warn("No Client ID found");
         }

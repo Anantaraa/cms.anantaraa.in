@@ -101,7 +101,7 @@ const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
             </div>
 
             <div className="footer-company-info">
-                <p>Anantaraa Architecture • +91 98765 43210 • info@anantaraa.in</p>
+                <p>Anantaraa Design Studio • +91 9574652320 • hello@anantaraa.in</p>
             </div>
         </div>
     );

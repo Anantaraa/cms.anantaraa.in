@@ -22,14 +22,10 @@ export default function ClientForm({ initialData, onSuccess, onCancel }) {
         e.preventDefault();
         setLoading(true);
         try {
-            // Create payload with aliases for phone to ensure backend captures it
+            // Backend accepts 'phone' and 'contact_number' fields
             const payload = {
                 ...formData,
-                mobile: formData.phone,
-                contact: formData.phone,
-                phone_number: formData.phone,
-                phoneNumber: formData.phone,
-                contact_number: formData.phone
+                contact_number: formData.phone // Map phone to contact_number for backend
             };
 
             if (isEditMode) {

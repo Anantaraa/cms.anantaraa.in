@@ -2,9 +2,13 @@ import React from 'react';
 import clsx from 'clsx';
 import './KPICard.css';
 
-export default function KPICard({ label, value, subValue, icon: Icon, trend, className }) {
+export default function KPICard({ label, value, subValue, icon: Icon, trend, className, onClick }) {
     return (
-        <div className={clsx('kpi-card', className)}>
+        <div
+            className={clsx('kpi-card', className, { 'clickable': !!onClick })}
+            onClick={onClick}
+            style={{ cursor: onClick ? 'pointer' : 'default' }}
+        >
             <div className="kpi-header">
                 <span className="kpi-label">{label}</span>
                 {Icon && <Icon className="kpi-icon" size={20} />}

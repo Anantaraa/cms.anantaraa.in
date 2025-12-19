@@ -65,6 +65,14 @@
     border-bottom: none;
 }
 
+.invoices-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.invoices-table tbody tr:hover {
+    background-color: var(--color-bg);
+}
+
 .text-right {
     text-align: right;
 }

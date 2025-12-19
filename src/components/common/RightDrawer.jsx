@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { X, ArrowLeft } from 'lucide-react';
 import './RightDrawer.css';
 
-export default function RightDrawer({ isOpen, onClose, title, children, width = '500px', onBack }) {
+export default function RightDrawer({ isOpen, onClose, title, children, width = '500px', onBack, depth = 0 }) {
     useEffect(() => {
         const handleEsc = (e) => {
             if (e.key === 'Escape') onClose();
@@ -27,13 +27,25 @@ export default function RightDrawer({ isOpen, onClose, title, children, width = 
                 onClick={e => e.stopPropagation()}
             >
                 <div className="drawer-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                         {onBack && (
                             <button className="close-btn" onClick={onBack} title="Back">
                                 <ArrowLeft size={20} />
                             </button>
                         )}
                         <h2>{title}</h2>
+                        {depth >= 0 && (
+                            <span style={{
+                                fontSize: '0.75rem',
+                                color: '#64748b',
+                                backgroundColor: '#f1f5f9',
+                                padding: '4px 10px',
+                                borderRadius: '12px',
+                                fontWeight: '600'
+                            }}>
+                                Level {depth + 1}
+                            </span>
+                        )}
                     </div>
                     <button className="close-btn" onClick={onClose}>
                         <X size={24} />

@@ -110,6 +110,26 @@ export default function ClientList() {
         }
     };
 
+    const handleNestedStatusUpdate = async (type, data) => {
+        // Refresh nested item after status update
+        try {
+            let freshData;
+            if (type === 'project') {
+                freshData = await api.projects.getById(data.id);
+                setSubViewData(freshData);
+            } else if (type === 'invoice') {
+                freshData = await api.invoices.getById(data.id);
+                setSubViewData(freshData);
+            }
+        } catch (error) {
+            console.error('Failed to refresh after status update', error);
+        }
+    };
+
+    const handlePrintInvoice = () => {
+        window.print();
+    };
+
     // --- Action Handlers ---
     const toggleMenu = (e, id) => {
         if (e && e.stopPropagation) e.stopPropagation();
@@ -483,6 +503,8 @@ export default function ClientList() {
                                 isDrawer={true}
                                 isNested={true}
                                 onEdit={(e, proj) => handleNestedNavigate('edit-project', proj)}
+                                onStatusUpdate={(e, proj) => handleNestedStatusUpdate('project', proj)}
+                                onNavigate={handleNestedNavigate}
                                 onDeleteSuccess={handleNestedItemChange}
                             />
                         )}
@@ -490,6 +512,9 @@ export default function ClientList() {
                             <InvoiceDetail
                                 invoiceData={subViewData}
                                 isDrawer={true}
+                                onEdit={(e, inv) => handleNestedNavigate('edit-invoice', inv)}
+                                onStatusUpdate={(e, inv) => handleNestedStatusUpdate('invoice', inv)}
+                                onPrint={handlePrintInvoice}
                                 onDeleteSuccess={handleNestedItemChange}
                             />
                         )}

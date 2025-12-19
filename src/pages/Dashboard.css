@@ -33,3 +33,175 @@
 .highlight-card {
     border-color: var(--color-warning);
 }
+
+/* Projects Section */
+.dashboard-projects-section {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.projects-filter-tabs {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-sm);
+}
+
+.filter-tab {
+    padding: var(--space-sm) var(--space-md);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-tab:hover {
+    color: var(--color-text);
+}
+
+.filter-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.dashboard-projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-lg);
+}
+
+.dashboard-project-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.dashboard-project-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.dashboard-project-card .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.dashboard-project-card .project-client {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.dashboard-project-card .project-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+    color: var(--color-text);
+}
+
+.dashboard-project-card .project-dates {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+}
+
+.dashboard-project-card .project-progress {
+    margin-bottom: var(--space-md);
+}
+
+.dashboard-project-card .progress-bar {
+    height: 8px;
+    background: var(--color-border);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--space-xs);
+}
+
+.dashboard-project-card .progress-bar .fill {
+    height: 100%;
+    background: var(--color-primary);
+    transition: width 0.3s;
+}
+
+.dashboard-project-card .progress-text {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.dashboard-project-card .card-footer {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-sm);
+}
+
+.dashboard-project-card .financial-mini {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.dashboard-project-card .financial-mini .label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-project-card .financial-mini .value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.no-projects {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--color-text-muted);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.status-badge.blue {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.orange {
+    background: #fed7aa;
+    color: #c2410c;
+}
+
+.status-badge.green {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.red {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.gray {
+    background: #f3f4f6;
+    color: #4b5563;
+}

@@ -109,6 +109,26 @@ export default function ProjectList() {
         }
     };
 
+    const handleNestedStatusUpdate = async (type, data) => {
+        // Refresh nested item after status update
+        try {
+            let freshData;
+            if (type === 'client') {
+                freshData = await api.clients.getById(data.id);
+                setSubViewData(freshData);
+            } else if (type === 'invoice') {
+                freshData = await api.invoices.getById(data.id);
+                setSubViewData(freshData);
+            }
+        } catch (error) {
+            console.error('Failed to refresh after status update', error);
+        }
+    };
+
+    const handlePrintInvoice = () => {
+        window.print();
+    };
+
     // --- Action Handlers --- (toggleMenu, openStatusModal, handleUpdateStatus...)
     const toggleMenu = (e, id) => {
         if (e && e.stopPropagation) e.stopPropagation();
@@ -185,9 +205,19 @@ export default function ProjectList() {
     const applyFilters = (projectList) => {
         let result = projectList;
 
-        // Status filter (from tabs)
+        // Status filter (from tabs) - case insensitive and handle "Planning" vs "Planned"
         if (filter !== 'All') {
-            result = result.filter(p => p.status === filter);
+            result = result.filter(p => {
+                const status = (p.status || '').toLowerCase();
+                const filterLower = filter.toLowerCase();
+
+                // Handle "Planning" filter matching "Planned" status
+                if (filterLower === 'planning') {
+                    return status === 'planning' || status === 'planned';
+                }
+
+                return status === filterLower;
+            });
         }
 
         // Date range filter
@@ -414,6 +444,8 @@ export default function ProjectList() {
                                 isDrawer={true}
                                 isNested={true}
                                 onEdit={(e, client) => handleNestedNavigate('edit-client', client)}
+                                onStatusUpdate={(e, client) => handleNestedStatusUpdate('client', client)}
+                                onNavigate={handleNestedNavigate}
                                 onDeleteSuccess={handleNestedItemChange}
                             />
                         )}
@@ -422,6 +454,8 @@ export default function ProjectList() {
                                 invoiceData={subViewData}
                                 isDrawer={true}
                                 onEdit={(e, invoice) => handleNestedNavigate('edit-invoice', invoice)}
+                                onStatusUpdate={(e, inv) => handleNestedStatusUpdate('invoice', inv)}
+                                onPrint={handlePrintInvoice}
                                 onDeleteSuccess={handleNestedItemChange}
                             />
                         )}
