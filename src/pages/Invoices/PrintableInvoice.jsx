@@ -5,6 +5,12 @@ import './PrintableInvoice.css';
 const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
     if (!invoice) return null;
 
+    // Convert invoice status to print status (only Pending or Paid)
+    const getPrintStatus = (status) => {
+        if (!status) return 'Pending';
+        return status.toLowerCase() === 'paid' ? 'Paid' : 'Pending';
+    };
+
     return (
         <div className="printable-invoice" ref={ref}>
             <div className="invoice-header">
@@ -13,28 +19,46 @@ const PrintableInvoice = React.forwardRef(({ invoice }, ref) => {
                     <h1>INVOICE</h1>
                     <div className="separator"></div>
                 </div>
+                <div className="company-info">
+                    <h3>Anantaraa Design Studio</h3>
+                    <p>341, Avadh Arena, VIP Road</p>
+                    <p>Vesu, Surat, Gujarat - 395007</p>
+                    <p>+91 9574652320 • hello@anantaraa.in</p>
+                </div>
             </div>
 
             <div className="invoice-meta-grid">
                 <div className="billed-to">
                     <h4>ISSUED TO:</h4>
-                    <p className="client-name">{invoice.client}</p>
-                    {/* Placeholder address - in real app would come from client data */}
-                    <p>Client Address</p>
-                    <p>City, Country</p>
+                    <p className="client-name">{invoice.client || invoice.clientName}</p>
+                    {invoice.clients?.address && (
+                        <p>{invoice.clients.address}</p>
+                    )}
+                    {invoice.clients?.contactNumber && (
+                        <p>Contact: {invoice.clients.contactNumber}</p>
+                    )}
                 </div>
                 <div className="invoice-details">
                     <div className="meta-row">
-                        <span className="label">INVOICE NO:</span>
+                        <span className="label">Invoice No:</span>
                         <span className="value">{invoice.invoiceNumber || invoice.id}</span>
                     </div>
                     <div className="meta-row">
-                        <span className="label">DATE:</span>
-                        <span className="value">{formatDate(invoice.date)}</span>
+                        <span className="label">Invoice Date:</span>
+                        <span className="value">{formatDate(invoice.date || invoice.generatedDate)}</span>
                     </div>
                     <div className="meta-row">
-                        <span className="label">DUE DATE:</span>
+                        <span className="label">Due Date:</span>
                         <span className="value">{formatDate(invoice.dueDate)}</span>
+                    </div>
+                    <div className="meta-row">
+                        <span className="label">Invoice Status:</span>
+                        <span className="value" style={{
+                            fontWeight: '600',
+                            color: getPrintStatus(invoice.status) === 'Paid' ? '#10b981' : '#f59e0b'
+                        }}>
+                            {getPrintStatus(invoice.status)}
+                        </span>
                     </div>
                 </div>
             </div>
