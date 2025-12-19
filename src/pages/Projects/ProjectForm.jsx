@@ -108,10 +108,24 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
         return plannedInvoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
     };
 
+    const calculateExistingTotals = () => {
+        const paid = existingInvoices
+            .filter(inv => inv.status === 'paid')
+            .reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+
+        const unpaid = existingInvoices
+            .filter(inv => inv.status !== 'paid')
+            .reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+
+        return { paid, unpaid, total: paid + unpaid };
+    };
+
     const getTotalValidation = () => {
         const projectValue = Number(formData.project_value) || 0;
         const totalPlanned = calculateTotalPlanned();
-        const difference = totalPlanned - projectValue;
+        const existingTotals = calculateExistingTotals();
+        const grandTotal = existingTotals.total + totalPlanned;
+        const difference = grandTotal - projectValue;
 
         if (projectValue === 0) return null;
         if (difference === 0) return { type: 'success', message: 'Total matches project value' };
@@ -355,15 +369,29 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                         </div>
 
                         {/* Summary Info */}
-                        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '12px', backgroundColor: 'white', borderRadius: '6px' }}>
+                        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '12px', backgroundColor: 'white', borderRadius: '6px', flexWrap: 'wrap' }}>
                             <div>
                                 <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>Project Value</span>
                                 <span style={{ fontSize: '18px', fontWeight: '600' }}>₹{Number(formData.project_value || 0).toLocaleString()}</span>
                             </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>Total Planned</span>
-                                <span style={{ fontSize: '18px', fontWeight: '600' }}>₹{calculateTotalPlanned().toLocaleString()}</span>
-                            </div>
+                            {isEditMode && existingInvoices.length > 0 && (
+                                <>
+                                    <div>
+                                        <span style={{ fontSize: '12px', color: '#10b981', display: 'block' }}>Total Paid</span>
+                                        <span style={{ fontSize: '18px', fontWeight: '600', color: '#10b981' }}>₹{calculateExistingTotals().paid.toLocaleString()}</span>
+                                    </div>
+                                    <div>
+                                        <span style={{ fontSize: '12px', color: '#f59e0b', display: 'block' }}>Total Unpaid</span>
+                                        <span style={{ fontSize: '18px', fontWeight: '600', color: '#f59e0b' }}>₹{calculateExistingTotals().unpaid.toLocaleString()}</span>
+                                    </div>
+                                </>
+                            )}
+                            {plannedInvoices.length > 0 && (
+                                <div>
+                                    <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>New Planned</span>
+                                    <span style={{ fontSize: '18px', fontWeight: '600' }}>₹{calculateTotalPlanned().toLocaleString()}</span>
+                                </div>
+                            )}
                             {getTotalValidation() && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
                                     <AlertCircle size={16} color={getTotalValidation().type === 'success' ? '#10b981' : '#f59e0b'} />

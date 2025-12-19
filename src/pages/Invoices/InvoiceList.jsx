@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Search, Plus, Edit2, MoreHorizontal, Printer, RefreshCw, X, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 import { api } from '../../services/api';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate, formatApiDate } from '../../utils/dateUtils';
 import RightDrawer from '../../components/common/RightDrawer';
 import InvoiceDetail from './InvoiceDetail';
 import InvoiceForm from './InvoiceForm';
@@ -142,10 +142,10 @@ export default function InvoiceList() {
                 }
 
                 // Create income record (backend will auto-update invoice status to paid)
-                await api.income.addIncome({
+                await api.income.create({
                     invoice_id: statusInvoice.id,
                     amount_received: Number(paymentDetails.amount_received),
-                    received_date: paymentDetails.received_date,
+                    received_date: formatApiDate(paymentDetails.received_date),
                     payment_method: paymentDetails.payment_method || 'Cash',
                     status: 'received'
                 });
