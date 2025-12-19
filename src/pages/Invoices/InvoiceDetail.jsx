@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'; // Consolidated imports
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Calendar, DollarSign, User, Briefcase, Edit2, Printer, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, User, Briefcase, Edit2, Printer, RefreshCw, Trash2, X } from 'lucide-react'; // Added X
 import { api } from '../../services/api';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate, formatApiDate } from '../../utils/dateUtils';
+import DateInput from '../../components/common/DateInput';
 import './InvoiceDetail.css';
 
 export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, onStatusUpdate, onPrint, onClose, onDeleteSuccess }) {
@@ -10,6 +11,17 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
     const navigate = useNavigate();
     const [invoice, setInvoice] = useState(invoiceData || null);
     const [loading, setLoading] = useState(!invoiceData);
+
+    // Status Modal State
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
+    const [newStatus, setNewStatus] = useState('');
+
+    // Payment recording state (when marking as paid)
+    const [paymentDetails, setPaymentDetails] = useState({
+        amount_received: '',
+        received_date: '',
+        payment_method: ''
+    });
 
     useEffect(() => {
         // Strategy: Stale-While-Revalidate
@@ -48,8 +60,53 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
         if (onEdit) onEdit(null, invoice);
     };
 
-    const handleStatus = () => {
-        if (onStatusUpdate) onStatusUpdate(null, invoice);
+    const handleOpenStatusModal = () => {
+        setNewStatus(invoice.status || 'draft');
+        // Pre-fill payment details if changing to paid
+        setPaymentDetails({
+            amount_received: invoice.amount || '',
+            received_date: new Date().toISOString().split('T')[0], // Today's date in yyyy-mm-dd
+            payment_method: ''
+        });
+        setStatusModalOpen(true);
+    };
+
+    const handleUpdateStatus = async () => {
+        try {
+            // If marking as paid, record payment instead of just updating status
+            if (newStatus === 'paid') {
+                // Validate payment details
+                if (!paymentDetails.amount_received || !paymentDetails.received_date) {
+                    alert('Please enter payment amount and date');
+                    return;
+                }
+
+                // Create income record (backend will auto-update invoice status to paid)
+                await api.income.create({
+                    invoice_id: invoice.id,
+                    amount_received: Number(paymentDetails.amount_received),
+                    received_date: formatApiDate(paymentDetails.received_date),
+                    payment_method: paymentDetails.payment_method || 'Cash',
+                    status: 'received'
+                });
+            } else {
+                // For other status changes, just update the status
+                await api.invoices.update(invoice.id, { status: newStatus });
+            }
+
+            setStatusModalOpen(false);
+
+            // Refetch or update local state
+            const updatedInvoice = await api.invoices.getById(invoice.id);
+            setInvoice(updatedInvoice);
+
+            // Notify parent if needed (e.g. to refresh list)
+            if (onStatusUpdate) onStatusUpdate(null, updatedInvoice);
+
+        } catch (error) {
+            console.error("Failed to update invoice status", error);
+            alert("Failed to update status");
+        }
     };
 
     const handlePrint = () => {
@@ -96,7 +153,7 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
                         </div>
                     </div>
                     <div className="header-actions-right" style={{ display: 'flex', gap: '8px' }}>
-                        <button className="icon-btn" onClick={handleStatus} title="Update Status">
+                        <button className="icon-btn" onClick={handleOpenStatusModal} title="Update Status">
                             <RefreshCw size={20} />
                         </button>
                         <button className="icon-btn" onClick={handleEdit} title="Edit">
@@ -217,6 +274,91 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
                     </button>
                 </div>
             </div>
+
+            {/* Status Update Modal */}
+            {statusModalOpen && (
+                <div className="modal-overlay" onClick={() => setStatusModalOpen(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Update Invoice Status</h3>
+                            <button onClick={() => setStatusModalOpen(false)}><X size={18} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <p>Modifying status for <b>{invoice?.invoiceNumber}</b></p>
+                            <select
+                                value={newStatus}
+                                onChange={(e) => setNewStatus(e.target.value)}
+                                className="status-select"
+                            >
+                                <option value="draft">Draft</option>
+                                <option value="sent">Sent</option>
+                                <option value="paid">Paid</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+
+                            {/* Show payment details form when status is "paid" */}
+                            {newStatus === 'paid' && (
+                                <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
+                                    <h4 style={{ marginBottom: '15px', color: '#0369a1' }}>Record Payment Details</h4>
+
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                            Amount Received <span style={{ color: 'red' }}>*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={paymentDetails.amount_received}
+                                            onChange={(e) => setPaymentDetails({ ...paymentDetails, amount_received: e.target.value })}
+                                            placeholder="Enter amount"
+                                            style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            required
+                                        />
+                                        <small style={{ color: '#64748b' }}>Invoice Amount: ₹{Number(invoice.amount || 0).toLocaleString()}</small>
+                                    </div>
+
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                            Payment Date <span style={{ color: 'red' }}>*</span>
+                                        </label>
+                                        <DateInput
+                                            value={paymentDetails.received_date}
+                                            onChange={(e) => setPaymentDetails({ ...paymentDetails, received_date: e.target.value })}
+                                            style={{ width: '100%' }}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '0' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                            Payment Method
+                                        </label>
+                                        <select
+                                            value={paymentDetails.payment_method}
+                                            onChange={(e) => setPaymentDetails({ ...paymentDetails, payment_method: e.target.value })}
+                                            style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                        >
+                                            <option value="">Select method</option>
+                                            <option value="Cash">Cash</option>
+                                            <option value="Bank Transfer">Bank Transfer</option>
+                                            <option value="Cheque">Cheque</option>
+                                            <option value="UPI">UPI</option>
+                                            <option value="Card">Card</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setStatusModalOpen(false)}>Cancel</button>
+                            <button className="btn-primary" onClick={handleUpdateStatus}>
+                                {newStatus === 'paid' ? 'Record Payment' : 'Update Status'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

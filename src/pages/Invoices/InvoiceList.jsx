@@ -341,7 +341,7 @@ export default function InvoiceList() {
                                     <td>{formatDate(inv.dueDate)}</td>
                                     <td className="text-right font-medium">₹{Number(inv.amount).toLocaleString()}</td>
                                     <td className="text-center">
-                                        <span className={`status-badge ${inv.status}`}>{inv.status}</span>
+                                        <span className={`status-badge ${inv.status.toLowerCase()}`}>{inv.status}</span>
                                     </td>
                                     <td className="action-col">
                                         <div className="action-flex">
@@ -399,7 +399,7 @@ export default function InvoiceList() {
                             <div style={{ marginBottom: '20px' }}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>Status</label>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    {['draft', 'sent', 'overdue', 'paid'].map(status => (
+                                    {['draft', 'sent', 'overdue', 'paid', 'cancelled'].map(status => (
                                         <label key={status} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                             <input
                                                 type="checkbox"
@@ -461,6 +461,7 @@ export default function InvoiceList() {
                                 <option value="sent">Sent</option>
                                 <option value="overdue">Overdue</option>
                                 <option value="paid">Paid</option>
+                                <option value="cancelled">Cancelled</option>
                             </select>
 
                             {/* Show payment details form when status is "paid" */}

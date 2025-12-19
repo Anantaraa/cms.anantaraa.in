@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Printer, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit2, Printer, Trash2, Wallet, User, Briefcase, Calendar, CreditCard, FileText, Download } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 import { api } from '../../services/api';
 import RightDrawer from '../../components/common/RightDrawer';
@@ -45,10 +45,8 @@ export default function IncomeDetail({ incomeData: propIncomeData, isDrawer, onB
 
     const handleEdit = () => {
         if (onEdit) {
-            // Drawer mode - use parent's edit handler
             onEdit(null, incomeData);
         } else {
-            // Standalone mode - open local edit drawer
             setEditDrawerOpen(true);
         }
     };
@@ -57,7 +55,7 @@ export default function IncomeDetail({ incomeData: propIncomeData, isDrawer, onB
         if (onPrint) {
             onPrint(null, incomeData);
         } else {
-            window.print();
+            window.print(); // Basic browser print
         }
     };
 
@@ -72,7 +70,7 @@ export default function IncomeDetail({ incomeData: propIncomeData, isDrawer, onB
     const handleEditSuccess = () => {
         setEditDrawerOpen(false);
         if (id) {
-            loadIncomeData(); // Refresh data in standalone mode
+            loadIncomeData();
         }
     };
 
@@ -84,7 +82,7 @@ export default function IncomeDetail({ incomeData: propIncomeData, isDrawer, onB
         try {
             await api.income.delete(incomeData.id);
             if (isDrawer && onDeleteSuccess) {
-                onDeleteSuccess(); // Refresh list and close drawer
+                onDeleteSuccess();
             } else if (isDrawer && onClose) {
                 onClose();
             } else {
@@ -103,102 +101,111 @@ export default function IncomeDetail({ incomeData: propIncomeData, isDrawer, onB
     return (
         <>
             <div className={`finance-detail-page ${isDrawer ? 'drawer-mode' : ''}`}>
-                <div className="detail-header-simple">
+                <div className="detail-header">
                     {!isDrawer && (
                         <button className="back-btn" onClick={handleBack}>
-                            <ArrowLeft size={18} /> Back
+                            <ArrowLeft size={20} /> Back to Income
                         </button>
                     )}
-                    <div className="header-actions-right">
-                        <button className="icon-btn" onClick={handleEdit} title="Edit">
-                            <Edit2 size={18} />
-                        </button>
-                        <button className="icon-btn" onClick={handlePrint} title="Print">
-                            <Printer size={18} />
-                        </button>
+                    <div className="header-container-flex">
+                        <div className="header-content">
+                            <div className="finance-icon-lg income">
+                                <Wallet size={32} />
+                            </div>
+                            <div className="title-info">
+                                <h1>Income Details</h1>
+                                <span className={`status-badge ${incomeData.status || 'received'}`}>
+                                    {incomeData.status || 'Received'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="header-actions-right">
+                            <button className="icon-btn" onClick={handleEdit} title="Edit">
+                                <Edit2 size={20} />
+                            </button>
+                            <button className="icon-btn" onClick={handlePrint} title="Print Receipt">
+                                <Printer size={20} />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="detail-content p-6">
-                    <div className="info-group">
-                        <label>Amount</label>
-                        <div className="amount-large text-success">
-                            ₹{(incomeData.amountReceived || incomeData.amount || 0).toLocaleString()}
+                <div className="detail-grid">
+                    <div className="info-card">
+                        <h3>Transaction Details</h3>
+                        <div className="info-list">
+                            <div className="info-item">
+                                <User size={18} />
+                                <div>
+                                    <div className="info-label">Client</div>
+                                    <div className="info-value clickable-link" onClick={() => incomeData.client_id && navigate(`/clients/${incomeData.client_id}`)}>
+                                        {incomeData.clientName || incomeData.client || '-'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="info-item">
+                                <Briefcase size={18} />
+                                <div>
+                                    <div className="info-label">Project</div>
+                                    <div className="info-value clickable-link" onClick={() => incomeData.project_id && navigate(`/projects/${incomeData.project_id}`)}>
+                                        {incomeData.projectName || incomeData.project || '-'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="info-item">
+                                <Calendar size={18} />
+                                <div>
+                                    <div className="info-label">Received Date</div>
+                                    <div className="info-value">{formatDate(incomeData.receivedDate || incomeData.date)}</div>
+                                </div>
+                            </div>
+                            <div className="info-item">
+                                <CreditCard size={18} />
+                                <div>
+                                    <div className="info-label">Payment Method</div>
+                                    <div className="info-value">{incomeData.paymentMethod || incomeData.method || '-'}</div>
+                                </div>
+                            </div>
+                            {incomeData.invoiceNumber && (
+                                <div className="info-item">
+                                    <FileText size={18} />
+                                    <div>
+                                        <div className="info-label">Invoice Ref</div>
+                                        <div className="info-value">{incomeData.invoiceNumber}</div>
+                                    </div>
+                                </div>
+                            )}
+                            {incomeData.description && (
+                                <div className="info-item">
+                                    <FileText size={18} />
+                                    <div>
+                                        <div className="info-label">Description</div>
+                                        <div className="info-value">{incomeData.description}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="divider"></div>
+
+                        <h3>Amount Received</h3>
+                        <div className="amount-display">
+                            <span className="currency">₹</span>
+                            <span className="amount income">
+                                {Number(incomeData.amountReceived || incomeData.amount).toLocaleString()}
+                            </span>
                         </div>
                     </div>
 
-                    <div className="grid-2">
-                        <div className="info-group">
-                            <label>Date</label>
-                            <div>{formatDate(incomeData.receivedDate || incomeData.date)}</div>
-                        </div>
-                        <div className="info-group">
-                            <label>Payment Method</label>
-                            <div>{incomeData.paymentMethod || incomeData.method || '-'}</div>
-                        </div>
-                    </div>
-
-                    <div className="info-group">
-                        <label>Client</label>
-                        <div>{incomeData.clientName || incomeData.client || '-'}</div>
-                    </div>
-
-                    <div className="info-group">
-                        <label>Project</label>
-                        <div>{incomeData.projectName || incomeData.project || '-'}</div>
-                    </div>
-
-                    {incomeData.invoiceNumber && (
-                        <div className="info-group">
-                            <label>Invoice</label>
-                            <div>{incomeData.invoiceNumber}</div>
-                        </div>
-                    )}
-
-                    {incomeData.description && (
-                        <div className="info-group">
-                            <label>Description</label>
-                            <div>{incomeData.description}</div>
-                        </div>
-                    )}
-
-                    {/* Delete Action - Pushed to bottom */}
-                    <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
-                        <button
-                            onClick={handleDelete}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                width: '100%',
-                                padding: '10px',
-                                backgroundColor: '#fee2e2',
-                                color: '#ef4444',
-                                border: '1px solid #fecaca',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                transition: 'all 0.2s'
-                            }}
-                            onMouseOver={(e) => {
-                                e.currentTarget.style.backgroundColor = '#fecaca';
-                                e.currentTarget.style.borderColor = '#fca5a5';
-                            }}
-                            onMouseOut={(e) => {
-                                e.currentTarget.style.backgroundColor = '#fee2e2';
-                                e.currentTarget.style.borderColor = '#fecaca';
-                            }}
-                        >
+                    <div className="delete-section">
+                        <button className="delete-btn" onClick={handleDelete}>
                             <Trash2 size={16} />
-                            Delete Income
+                            Delete Record
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Edit drawer for standalone mode */}
             {!isDrawer && (
                 <RightDrawer
                     isOpen={editDrawerOpen}

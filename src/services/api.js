@@ -112,6 +112,14 @@ const mappers = {
             responsiblePerson: i.responsible_person || '',
             createdAt: i.created_at || ''
         })) : [],
+        quotations: Array.isArray(data.quotations) ? data.quotations.map(q => ({
+            id: q.id,
+            description: q.description || '',
+            amount: q.amount,
+            date: q.date || '',
+            status: q.status || 'active',
+            createdAt: q.created_at || ''
+        })) : [],
         expenses: Array.isArray(data.expenses) ? data.expenses.map(e => ({
             id: e.id,
             amount: e.amount,
@@ -432,6 +440,10 @@ export const api = {
         addIncome: (data) => handleRequest(apiClient.post('/api/v1/income', data), mappers.income)
     },
 
+    quotations: {
+        create: (data) => handleRequest(apiClient.post('/api/v1/quotations', data)),
+        delete: (id) => handleRequest(apiClient.delete(`/api/v1/quotations/${id}`))
+    },
     // Reports
     reports: {
         getProjectSummary: (id) => handleRequest(apiClient.get(`/api/v1/reports/projects/${id}/summary`), mappers.projectSummary),

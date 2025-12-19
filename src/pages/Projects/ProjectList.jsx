@@ -15,7 +15,8 @@ import './ProjectList.css';
 export default function ProjectList() {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('All');
+    // Default to 'Ongoing' as requested
+    const [filter, setFilter] = useState('Ongoing');
 
     // Date Filter State
     const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -254,7 +255,7 @@ export default function ProjectList() {
             {/* ... Page Actions (Tabs/New) ... */}
             <div className="page-actions">
                 <div className="tabs">
-                    {['All', 'Ongoing', 'Planning', 'Completed'].map(status => (
+                    {['All', 'Ongoing', 'Planning', 'Completed', 'Dropped'].map(status => (
                         <button
                             key={status}
                             className={`tab-btn ${filter === status ? 'active' : ''}`}
@@ -293,7 +294,7 @@ export default function ProjectList() {
                 {loading ? <div className="loading">Loading...</div> : filteredProjects.map(project => (
                     <div key={project.id} className="project-card" onClick={() => handleViewProject(project)}>
                         <div className="card-top">
-                            <span className={`status-badge ${statusColors[project.status] || 'gray'}`}>{project.status}</span>
+                            <span className={`status-badge ${project.status.toLowerCase()}`}>{project.status}</span>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                 <span className="project-client">{project.client}</span>
                                 <div className="action-flex-proj">
@@ -406,6 +407,7 @@ export default function ProjectList() {
                                 <option value="ongoing">Ongoing</option>
                                 <option value="completed">Completed</option>
                                 <option value="paused">Paused</option>
+                                <option value="dropped">Dropped</option>
                             </select>
                         </div>
                         <div className="modal-actions">

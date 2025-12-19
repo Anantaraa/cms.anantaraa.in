@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [profitabilityData, setProfitabilityData] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [projectFilter, setProjectFilter] = useState('All');
+  const [projectFilter, setProjectFilter] = useState('Ongoing');
   const [loading, setLoading] = useState(true);
 
   // Navigation Stack for infinite nesting
@@ -104,8 +104,11 @@ export default function Dashboard() {
 
         setProfitabilityData(topProfitableProjects);
 
-        // Get Outstanding Invoices for List (top 5 most urgent)
-        setInvoices(outstandingInvoicesList.slice(0, 5));
+        // Get Outstanding Invoices for List
+        setInvoices(outstandingInvoicesList); // Pass all, let component slice or sort? No, usually dashboard slices.
+        // Let's sort by due date by default here
+        const sortedInvoices = [...outstandingInvoicesList].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        setInvoices(sortedInvoices.slice(0, 5));
 
         // Store all projects for filtering
         setProjects(projectsData);
@@ -300,23 +303,39 @@ export default function Dashboard() {
 
       {/* Projects Section with Filters */}
       <div className="dashboard-projects-section">
-        <div className="projects-filter-tabs">
-          {['All', 'Ongoing', 'Planning', 'Completed'].map(status => (
-            <button
-              key={status}
-              className={`filter-tab ${projectFilter === status ? 'active' : ''}`}
-              onClick={() => setProjectFilter(status)}
-            >
-              {status}
-            </button>
-          ))}
+        <div className="projects-filter-tabs" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {['All', 'Ongoing', 'Planning', 'Completed', 'Dropped'].map(status => (
+              <button
+                key={status}
+                className={`filter-tab ${projectFilter === status ? 'active' : ''}`}
+                onClick={() => setProjectFilter(status)}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+          <button
+            className="view-more-link"
+            onClick={() => navigate('/projects')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#3b82f6',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >
+            View More
+          </button>
         </div>
 
         <div className="dashboard-projects-grid">
           {filteredProjects.length === 0 ? (
             <div className="no-projects">No projects found</div>
           ) : (
-            filteredProjects.slice(0, 3).map(project => (
+            filteredProjects.slice(0, 4).map(project => (
               <div key={project.id} className="dashboard-project-card" onClick={() => handleProjectClick(project)}>
                 <div className="card-top">
                   <span className={`status-badge ${statusColors[project.status] || 'gray'}`}>

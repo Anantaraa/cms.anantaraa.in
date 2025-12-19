@@ -186,6 +186,7 @@ export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
                                 <option value="sent">Sent</option>
                                 <option value="overdue">Overdue</option>
                                 <option value="paid">Paid</option>
+                                <option value="cancelled">Cancelled</option>
                             </select>
                         </div>
 

@@ -48,14 +48,62 @@
     padding: 6px 16px;
     border-radius: 20px;
     font-weight: 600;
-    text-transform: uppercase;
+    text-transform: capitalize;
     font-size: 0.85rem;
     letter-spacing: 0.05em;
 }
 
+.status-badge-lg.ongoing {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Blue */
+.status-badge-lg.planning {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+/* Orange */
+.status-badge-lg.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Green */
+.status-badge-lg.paused {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Amber */
+.status-badge-lg.dropped {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Red */
+.status-badge-lg.cancelled {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Gray */
+
+/* Legacy capitalization support if needed, but we will switch to lowercase in JSX */
 .status-badge-lg.Ongoing {
-    background: #E3F2FD;
-    color: #1565C0;
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge-lg.Planned {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+.status-badge-lg.Completed {
+    background: #d1fae5;
+    color: #065f46;
 }
 
 .project-grid {

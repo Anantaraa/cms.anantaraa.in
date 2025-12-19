@@ -48,6 +48,9 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
     const [existingInvoices, setExistingInvoices] = useState([]);
     const [invoiceCounter, setInvoiceCounter] = useState(1);
 
+    // Helpers
+    const isPlanning = formData.status === 'planned';
+
     // Debug logging
     console.log("ProjectForm rendering", { isEditMode, initialData });
 
@@ -70,9 +73,28 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
         const loadExistingInvoices = async () => {
             if (isEditMode && initialData?.id) {
                 try {
+                    // Fetch Invoices and Quotations
+                    // NOTE: Backend should ideally handle 'quotations' field in project object, 
+                    // but for compatibility we might fetch invoices separately. 
+                    // However, we are now using separate table.
+                    // Assuming project.quotations is populated by backend getById? NO, we are in form.
+
+                    // We need to fetch quotations if planning.
+                    // For now, let's rely on api to give us data.
+                    // Ideally we should modify api.projects.getById to return quotations.
+                    // But here we are just loading for display.
+
                     const invoices = await api.invoices.getAll();
                     const projectInvoices = invoices.filter(inv => inv.projectId === initialData.id);
                     setExistingInvoices(projectInvoices);
+
+                    // TODO: Load existing quotations if planning?
+                    // Currently we don't have an endpoint exposed in frontend api service for quotations list
+                    // We might need to rely on what was passed in initialData if it has quotations.
+                    if (initialData.quotations) {
+                        // If we have quotations, maybe we want to show them?
+                        // For now, let's focus on logic separation.
+                    }
                 } catch (e) {
                     console.error("Error loading invoices:", e);
                 }
@@ -88,7 +110,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
             amount: '',
             due_date: '',
             generated_date: new Date().toISOString().split('T')[0], // Today
-            description: `Invoice ${invoiceCounter}`,
+            description: '',
         };
         setPlannedInvoices([...plannedInvoices, newInvoice]);
         setInvoiceCounter(invoiceCounter + 1);
@@ -140,6 +162,26 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
         try {
             let result;
 
+            // Handle Dropped Status Side Effects
+            if (formData.status === 'dropped' && isEditMode) {
+                // Find draft or sent invoices that are NOT overdue
+                const pendingInvoices = existingInvoices.filter(inv =>
+                    (inv.status === 'draft' || inv.status === 'sent') && inv.status !== 'overdue'
+                );
+
+                if (pendingInvoices.length > 0) {
+                    if (window.confirm(`Setting project to Dropped will cancel ${pendingInvoices.length} pending invoices (Draft/Sent). Overdue invoices will remain. Proceed?`)) {
+                        console.log("Cancelling invoices:", pendingInvoices.map(i => i.id));
+                        await Promise.all(pendingInvoices.map(inv =>
+                            api.invoices.update(inv.id, { ...inv, status: 'cancelled' })
+                        ));
+                    } else {
+                        setLoading(false);
+                        return; // Abort save
+                    }
+                }
+            }
+
             // Define allowed fields for the API to prevent sending relation objects
             const allowedFields = [
                 'name', 'location', 'type', 'status', 'client_id',
@@ -163,9 +205,6 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
             });
 
             // Handle number fields specifically
-
-
-            // Handle number fields specifically
             if (payload.project_value === '' || payload.project_value === null) {
                 payload.project_value = 0; // Default to 0 as per schema
             } else {
@@ -182,39 +221,76 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
             }
             console.log("Project saved:", result);
 
-            // Step 2: Create planned invoices
+            // Step 2: Create planned invoices OR Quotations
             if (plannedInvoices.length > 0) {
                 const projectId = isEditMode ? initialData.id : result.id;
-                console.log("Creating invoices for project:", projectId);
+                console.log("Creating items for project:", projectId);
+                // Based on status, decide whether to create Quotation or Invoice
+                const isProjectPlanning = formData.status === 'planned';
 
-                // Generate invoice numbers based on existing invoices count
-                const existingCount = existingInvoices.length;
+                // Get existing invoice count for numbering invoices
+                // Quotations don't need 'INV-' numbers, they are just items
+                // Get all invoices to determine the next global invoice number
+                let nextInvoiceNumber = 1;
+                try {
+                    const allInvoices = await api.invoices.getAll();
+                    const numbers = allInvoices
+                        .map(inv => {
+                            const match = inv.invoiceNumber?.match(/INV-(\d+)/);
+                            return match ? parseInt(match[1], 10) : 0;
+                        })
+                        .filter(n => !isNaN(n));
+                    if (numbers.length > 0) {
+                        nextInvoiceNumber = Math.max(...numbers) + 1;
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch all invoices for numbering", e);
+                }
 
                 for (let i = 0; i < plannedInvoices.length; i++) {
-                    const invoice = plannedInvoices[i];
+                    const item = plannedInvoices[i];
 
                     // Validate required fields
-                    if (!invoice.amount || !invoice.due_date) {
-                        alert(`Invoice ${i + 1}: Amount and Due Date are required`);
+                    if (!item.amount || !item.due_date) {
+                        alert(`Item ${i + 1}: Amount and Due Date are required`);
                         continue;
                     }
 
-                    const invoicePayload = {
-                        invoice_number: `INV-${(existingCount + i + 1).toString().padStart(3, '0')}`,
-                        client_id: formData.client_id,
-                        project_id: projectId,
-                        amount: Number(invoice.amount),
-                        generated_date: formatApiDate(invoice.generated_date),
-                        due_date: formatApiDate(invoice.due_date),
-                        description: invoice.description || '',
-                        status: 'draft',
-                    };
+                    if (isProjectPlanning) {
+                        // ... quotation logic ...
+                        const quotationPayload = {
+                            project_id: projectId,
+                            description: item.description,
+                            amount: Number(item.amount),
+                            date: formatApiDate(item.due_date), // Use due date as the main date
+                            status: 'active'
+                        };
 
-                    try {
-                        await api.invoices.create(invoicePayload);
-                        console.log(`Invoice ${i + 1} created`);
-                    } catch (error) {
-                        console.error(`Failed to create invoice ${i + 1}:`, error);
+                        try {
+                            await api.quotations.create(quotationPayload);
+                            console.log(`Quotation ${i + 1} created`);
+                        } catch (error) {
+                            console.error(`Failed to create quotation ${i + 1}:`, error);
+                        }
+                    } else {
+                        // --- CREATE INVOICE ---
+                        const invoicePayload = {
+                            invoice_number: `INV-${(nextInvoiceNumber + i).toString().padStart(3, '0')}`,
+                            client_id: formData.client_id,
+                            project_id: projectId,
+                            amount: Number(item.amount),
+                            generated_date: formatApiDate(item.generated_date || item.due_date),
+                            due_date: formatApiDate(item.due_date),
+                            description: item.description || '',
+                            status: 'draft',
+                        };
+
+                        try {
+                            await api.invoices.create(invoicePayload);
+                            console.log(`Invoice ${i + 1} created`);
+                        } catch (error) {
+                            console.error(`Failed to create invoice ${i + 1}:`, error);
+                        }
                     }
                 }
             }
@@ -290,6 +366,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                                 <option value="ongoing">Ongoing</option>
                                 <option value="completed">Completed</option>
                                 <option value="paused">Paused</option>
+                                <option value="dropped">Dropped</option>
                             </select>
                         </div>
 
@@ -347,7 +424,9 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                     {/* Invoice Schedule Section */}
                     <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Invoice Schedule (Optional)</h3>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+                                {isPlanning ? 'Quotation Schedule (Optional)' : 'Invoice Schedule (Optional)'}
+                            </h3>
                             <button
                                 type="button"
                                 onClick={addInvoice}
@@ -364,7 +443,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                                     fontSize: '14px'
                                 }}
                             >
-                                <Plus size={16} /> Add Invoice
+                                <Plus size={16} /> {isPlanning ? 'Add Quotation' : 'Add Invoice'}
                             </button>
                         </div>
 
@@ -388,7 +467,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                             )}
                             {plannedInvoices.length > 0 && (
                                 <div>
-                                    <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>New Planned</span>
+                                    <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>New {isPlanning ? 'Planned' : 'Invoices'}</span>
                                     <span style={{ fontSize: '18px', fontWeight: '600' }}>₹{calculateTotalPlanned().toLocaleString()}</span>
                                 </div>
                             )}
@@ -406,9 +485,9 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                         {isEditMode && existingInvoices.length > 0 && (
                             <div style={{ marginBottom: '20px' }}>
                                 <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px', color: '#475569' }}>
-                                    Existing Invoices ({existingInvoices.length})
+                                    Existing {isPlanning ? 'Quotations' : 'Invoices'} ({existingInvoices.length})
                                 </h4>
-                                {existingInvoices.map(inv => (
+                                {existingInvoices.map((inv, index) => (
                                     <div key={inv.id} style={{
                                         padding: '12px',
                                         backgroundColor: inv.status === 'paid' ? '#f0fdf4' : 'white',
@@ -419,7 +498,9 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <div>
-                                                <span style={{ fontWeight: '500', marginRight: '12px' }}>{inv.invoiceNumber}</span>
+                                                <span style={{ fontWeight: '500', marginRight: '12px' }}>
+                                                    {isPlanning ? `#${index + 1}` : inv.invoiceNumber}
+                                                </span>
                                                 <span style={{ fontSize: '14px', color: '#64748b' }}>{inv.description}</span>
                                             </div>
                                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -444,7 +525,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                         {plannedInvoices.length > 0 && (
                             <div>
                                 <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px', color: '#475569' }}>
-                                    New Invoices to Create ({plannedInvoices.length})
+                                    New {isPlanning ? 'Quotations' : 'Invoices'} to Create ({plannedInvoices.length})
                                 </h4>
                                 {plannedInvoices.map((invoice, index) => (
                                     <div key={invoice.tempId} style={{
@@ -455,7 +536,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
                                         marginBottom: '12px'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                                            <h5 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Invoice #{index + 1}</h5>
+                                            <h5 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>{isPlanning ? 'Quotation' : 'Invoice'} #{index + 1}</h5>
                                             <button
                                                 type="button"
                                                 onClick={() => removeInvoice(invoice.tempId)}
@@ -532,7 +613,7 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }) {
 
                         {plannedInvoices.length === 0 && (!isEditMode || existingInvoices.length === 0) && (
                             <div style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
-                                <p>No invoices planned yet. Click "Add Invoice" to create invoice schedule.</p>
+                                <p>No {isPlanning ? 'quotations' : 'invoices'} planned yet. Click "{isPlanning ? 'Add Quotation' : 'Add Invoice'}" to create schedule.</p>
                             </div>
                         )}
                     </div>

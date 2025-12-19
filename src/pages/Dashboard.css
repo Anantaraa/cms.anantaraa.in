@@ -72,8 +72,20 @@
 
 .dashboard-projects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
+}
+
+@media (max-width: 1200px) {
+    .dashboard-projects-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-projects-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .dashboard-project-card {
@@ -181,14 +193,79 @@
     text-transform: capitalize;
 }
 
+/* Generalized Status Colors */
+.status-badge.ongoing {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Blue */
+.status-badge.planning {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+/* Orange */
+.status-badge.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Green */
+.status-badge.paused {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Amber */
+.status-badge.dropped {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Red */
+
+.status-badge.paid {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* Green */
+.status-badge.draft {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* Gray */
+.status-badge.sent {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+/* Light Blue */
+.status-badge.overdue {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Red */
+.status-badge.cancelled {
+    background: #f1f5f9;
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+/* Slate */
+
+/* Legacy Support (if direct colors used) */
 .status-badge.blue {
     background: #dbeafe;
     color: #1e40af;
 }
 
 .status-badge.orange {
-    background: #fed7aa;
-    color: #c2410c;
+    background: #ffedd5;
+    color: #9a3412;
 }
 
 .status-badge.green {

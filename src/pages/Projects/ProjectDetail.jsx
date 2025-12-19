@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 import { formatDate } from '../../utils/dateUtils';
 import ClientDetail from '../Clients/ClientDetail';
 import InvoiceDetail from '../Invoices/InvoiceDetail';
+import html2pdf from 'html2pdf.js';
 import './ProjectDetail.css';
 
 export default function ProjectDetail({ projectData, isDrawer = false, onEdit, onStatusUpdate, activeView = 'project', subViewData, onNavigate, onClose, onDeleteSuccess }) {
@@ -22,6 +23,101 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
     const handleStatus = () => {
         if (onStatusUpdate) onStatusUpdate(null, project);
     };
+
+    const handleGeneratePDF = () => {
+        const isPlanning = project.status === 'planned';
+        const docTitle = isPlanning ? 'Quotation' : 'Invoice List';
+
+        // Create a temporary container for PDF content
+        const element = document.createElement('div');
+        element.style.padding = '40px';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.innerHTML = `
+            <div style="border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h1 style="margin: 0; color: #000000;">Anantaraa Design Studio</h1>
+                    <p style="margin: 4px 0 0 0; font-size: 12px; color: #444;">+91 9574652320 | hello@anantaraa.in</p>
+                    <p style="margin: 2px 0 0 0; font-size: 12px; color: #444;">341, Avadh Arena, VIP Road, Vesu, Surat, Gujarat 395007</p>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="margin: 0; color: #000;">${docTitle.toUpperCase()}</h2>
+                    <p style="margin: 5px 0; font-size: 12px;">Date: ${new Date().toLocaleDateString('en-GB')}</p>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <h3 style="margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Project Details</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: bold; width: 150px;">Project Name:</td>
+                        <td>${project.name}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: bold;">Client:</td>
+                        <td>${project.clientName || project.client || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: bold;">Location:</td>
+                        <td>${project.location || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: bold;">Status:</td>
+                        <td>${project.status ? project.status.charAt(0).toUpperCase() + project.status.slice(1) : 'Unknown'}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div>
+                <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                    ${isPlanning ? 'Quotation Items' : 'Invoices'}
+                </h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                            <th style="padding: 12px; text-align: left; color: #475569;">#</th>
+                            <th style="padding: 12px; text-align: left; color: #475569;">Description</th>
+                            <th style="padding: 12px; text-align: right; color: #475569;">Due Date</th>
+                            <th style="padding: 12px; text-align: right; color: #475569;">Amount</th>
+                        </tr>
+                    </thead>
+                    </thead>
+                    <tbody>
+                        ${(isPlanning ? (project.quotations || []) : (project.invoices || [])).map((item, index) => `
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 12px; color: #334155;">${isPlanning ? index + 1 : item.invoiceNumber}</td>
+                                <td style="padding: 12px; color: #334155;">${item.description || (isPlanning ? 'Quotation Item' : 'Invoice')}</td>
+                                <td style="padding: 12px; text-align: right; color: #334155;">${formatDate(item.date || item.dueDate || item.due_date)}</td>
+                                <td style="padding: 12px; text-align: right; font-weight: bold; color: #0f172a;">₹${(item.amount || 0).toLocaleString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="3" style="padding: 12px; text-align: right;">Total:</td>
+                            <td style="padding: 12px; text-align: right; color: #2563eb;">
+                                ₹${(isPlanning ? (project.quotations || []) : (project.invoices || [])).reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toLocaleString()}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div style="margin-top: 50px; text-align: center; color: #94a3b8; font-size: 12px;">
+                <p>This is a computer generated document.</p>
+            </div>
+        `;
+
+        const opt = {
+            margin: 10,
+            filename: `${project.name.replace(/\s+/g, '_')}_${docTitle}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    };
+
 
     const handleDelete = async () => {
         if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
@@ -135,10 +231,15 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                                 <User size={14} /> {project?.client || 'Unknown'} <ArrowUpRight size={12} />
                             </p>
                         </div>
-                        <span className={`status-badge-lg ${project?.status || 'planned'}`}>{project?.status || 'Planned'}</span>
+                        <span className={`status-badge-lg ${(project?.status || 'planned').toLowerCase()}`}>
+                            {project?.status || 'Planned'}
+                        </span>
                     </div>
 
                     <div className="header-actions-right">
+                        <button className="icon-btn" onClick={handleGeneratePDF} title="Download PDF">
+                            <FileText size={20} />
+                        </button>
                         <button className="icon-btn" onClick={handleStatus} title="Update Status">
                             <RefreshCw size={20} />
                         </button>
@@ -185,30 +286,30 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                     <div className="lists-row">
                         {/* INVOICES SECTION */}
                         <div className="card">
-                            <h3>Invoices</h3>
+                            <h3>{project.status === 'planned' ? 'Quotations' : 'Invoices'}</h3>
                             <div className="table-responsive">
-                                {(project.invoices && project.invoices.length > 0) ? (
+                                {(project.status === 'planned' ? (project.quotations && project.quotations.length > 0) : (project.invoices && project.invoices.length > 0)) ? (
                                     <table className="mini-table">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
-                                                <th>Date</th>
+                                                <th>Due Date</th>
                                                 <th>Amount</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {(project.invoices || []).map(inv => (
-                                                <tr key={inv.id} onClick={() => handleViewInvoice(inv)} style={{ cursor: 'pointer' }}>
-                                                    <td>{inv.invoiceNumber}</td>
-                                                    <td>{formatDate(inv.generatedDate || inv.date)}</td>
-                                                    <td>₹{(inv.amount || 0).toLocaleString()}</td>
-                                                    <td><span className={`status-badge-sm ${inv.status}`}>{inv.status}</span></td>
+                                            {(project.status === 'planned' ? (project.quotations || []) : (project.invoices || [])).map((item, index) => (
+                                                <tr key={item.id} onClick={() => project.status !== 'planned' && handleViewInvoice(item)} style={{ cursor: project.status !== 'planned' ? 'pointer' : 'default' }}>
+                                                    <td>{project.status === 'planned' ? index + 1 : item.invoiceNumber}</td>
+                                                    <td>{formatDate(item.date || item.dueDate || item.due_date)}</td>
+                                                    <td>₹{(item.amount || 0).toLocaleString()}</td>
+                                                    <td><span className={`status-badge-sm ${item.status}`}>{item.status}</span></td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
-                                ) : <p className="text-muted">No invoices found.</p>}
+                                ) : <p className="text-muted">No {project.status === 'planned' ? 'quotations' : 'invoices'} found.</p>}
                             </div>
                         </div>
 
