@@ -133,7 +133,7 @@ export default function IncomeForm({ onSuccess, onCancel, initialData }) {
                     </div>
 
                     <div className="form-field">
-                        <label>Date</label>
+                        <label>Date <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
                         <input type="date" name="date" value={formData.date} onChange={handleChange} required />
                     </div>
 

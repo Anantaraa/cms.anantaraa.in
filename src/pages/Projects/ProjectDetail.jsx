@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, CheckSquare, Wallet, User, FileText, ArrowRight, ArrowUpRight, RefreshCw, Edit2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, CheckSquare, Wallet, User, FileText, ArrowRight, ArrowUpRight, RefreshCw, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatDate } from '../../utils/dateUtils';
 import ClientDetail from '../Clients/ClientDetail';
 import InvoiceDetail from '../Invoices/InvoiceDetail';
 import './ProjectDetail.css';
 
-export default function ProjectDetail({ projectData, isDrawer = false, onEdit, onStatusUpdate, activeView = 'project', subViewData, onNavigate }) {
+export default function ProjectDetail({ projectData, isDrawer = false, onEdit, onStatusUpdate, activeView = 'project', subViewData, onNavigate, onClose, onDeleteSuccess }) {
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -23,37 +23,59 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
         if (onStatusUpdate) onStatusUpdate(null, project);
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await api.projects.delete(project.id);
+            if (isDrawer && onDeleteSuccess) {
+                onDeleteSuccess(); // Refresh list and close drawer
+            } else if (isDrawer && onClose) {
+                onClose();
+            } else {
+                navigate('/projects');
+            }
+        } catch (error) {
+            console.error('Failed to delete project', error);
+            alert('Failed to delete project');
+        }
+    };
+
     useEffect(() => {
-        if (projectData) {
+        // Strategy: Stale-While-Revalidate
+        // 1. If projectData is passed (from list), use it immediately for instant render.
+        // 2. But ALWAYS fetch the full fresh data by ID to get nested relations (invoices, expenses) 
+        //    which might be missing or empty in the list view object.
+
+        let initialLoadDone = false;
+
+        if (projectData && !initialLoadDone) {
             setProject(projectData);
             setLoading(false);
-        } else if (id) {
-            const fetchProject = async () => {
-                try {
-                    const data = await api.projects.getById(id);
-                    setProject(data);
-                } catch (error) {
-                    console.error(error);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchProject();
+            initialLoadDone = true;
         }
-    }, [id, projectData]);
 
-    // Data is now included in project object via updated API mappers
-    // But we can keep local state for them if we want to support the list rendering
-    useEffect(() => {
-        if (project) {
-            // If project loaded via new API, it has these arrays. 
-            // If not (e.g. passed from list without full details? List mapper now includes them too usually, or at least subset).
-            // Let's rely on what's in 'project'.
-            // If 'project' from List view doesn't have them, we might need to fetch. 
-            // But 'getById' definitely has them.
-            // Let's just trust 'project' object structure from the mapper.
-        }
-    }, [project]);
+        const targetId = id || projectData?.id;
+
+        const fetchProject = async () => {
+            if (!targetId) return;
+            try {
+                // If we didn't have projectData, we are loading.
+                if (!projectData) setLoading(true);
+
+                const data = await api.projects.getById(targetId);
+                setProject(data);
+            } catch (error) {
+                console.error("Failed to load project details", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProject();
+    }, [id, projectData]);
 
     // --- Navigation Handlers ---
     const handleViewClient = () => {
@@ -105,10 +127,10 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                         <div>
                             <h1>{project.name}</h1>
                             <p className="subtitle" onClick={handleViewClient} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <User size={14} /> {project.client} <ArrowUpRight size={12} />
+                                <User size={14} /> {project?.client || 'Unknown'} <ArrowUpRight size={12} />
                             </p>
                         </div>
-                        <span className={`status-badge-lg ${project.status}`}>{project.status}</span>
+                        <span className={`status-badge-lg ${project?.status || 'planned'}`}>{project?.status || 'Planned'}</span>
                     </div>
 
                     <div className="header-actions-right">
@@ -129,10 +151,10 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                         <p className="desc">{project.description}</p>
                         <div className="meta-row">
                             <div className="meta-item">
-                                <MapPin size={16} /> {project.location || 'No location'}
+                                <MapPin size={16} /> {project?.location || 'No location'}
                             </div>
                             <div className="meta-item">
-                                <Calendar size={16} /> {formatDate(project.startDate)} — {formatDate(project.endDate)}
+                                <Calendar size={16} /> {formatDate(project?.startDate)} — {formatDate(project?.expectedEndDate)}
                             </div>
                         </div>
                     </div>
@@ -146,11 +168,11 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                             </div>
                             <div className="fin-stat">
                                 <span className="label">Income</span>
-                                <span className="val success">₹{((project.income || 0) / 1000).toFixed(1)}K</span>
+                                <span className="val success">₹{((project?.income || 0) / 1000).toFixed(1)}K</span>
                             </div>
                             <div className="fin-stat">
                                 <span className="label">Expense</span>
-                                <span className="val danger">₹{((project.expense || 0) / 1000).toFixed(1)}K</span>
+                                <span className="val danger">₹{((project?.expense || 0) / 1000).toFixed(1)}K</span>
                             </div>
                         </div>
                     </div>
@@ -171,11 +193,11 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {project.invoices.map(inv => (
+                                            {(project.invoices || []).map(inv => (
                                                 <tr key={inv.id} onClick={() => handleViewInvoice(inv)} style={{ cursor: 'pointer' }}>
                                                     <td>{inv.invoiceNumber}</td>
                                                     <td>{formatDate(inv.generatedDate || inv.date)}</td>
-                                                    <td>₹{inv.amount.toLocaleString()}</td>
+                                                    <td>₹{(inv.amount || 0).toLocaleString()}</td>
                                                     <td><span className={`status-badge-sm ${inv.status}`}>{inv.status}</span></td>
                                                 </tr>
                                             ))}
@@ -200,12 +222,12 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {project.expenses.map(exp => (
+                                            {(project.expenses || []).map(exp => (
                                                 <tr key={exp.id}>
                                                     <td>{formatDate(exp.expenseDate || exp.date)}</td>
                                                     <td>{exp.description}</td>
                                                     <td><span className="badge-gray">{exp.responsiblePerson}</span></td>
-                                                    <td className="text-danger">₹{exp.amount.toLocaleString()}</td>
+                                                    <td className="text-danger">₹{(exp.amount || 0).toLocaleString()}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -214,6 +236,39 @@ export default function ProjectDetail({ projectData, isDrawer = false, onEdit, o
                             </div>
                         </div>
                     </div>
+                </div>
+                {/* Delete Action - Pushed to bottom */}
+                <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+                    <button
+                        onClick={handleDelete}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            width: '100%',
+                            padding: '10px',
+                            backgroundColor: '#fee2e2',
+                            color: '#ef4444',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fecaca';
+                            e.currentTarget.style.borderColor = '#fca5a5';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fee2e2';
+                            e.currentTarget.style.borderColor = '#fecaca';
+                        }}
+                    >
+                        <Trash2 size={16} />
+                        Delete Project
+                    </button>
                 </div>
             </div>
         </div>

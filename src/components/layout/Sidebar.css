@@ -112,6 +112,22 @@
     min-width: 20px;
 }
 
+.nav-label {
+    opacity: 1;
+    transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .nav-label {
+    opacity: 0;
+    width: 0;
+    display: none;
+}
+
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: var(--space-sm);
+}
+
 /* Footer */
 .sidebar-footer {
     padding: var(--space-md);

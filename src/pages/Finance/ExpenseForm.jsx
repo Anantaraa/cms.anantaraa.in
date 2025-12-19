@@ -76,7 +76,7 @@ export default function ExpenseForm({ onSuccess, onCancel, initialData }) {
             <form onSubmit={handleSubmit}>
                 <div className="form-grid">
                     <div className="form-field">
-                        <label>Date *</label>
+                        <label>Date * <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
                         <input
                             type="date"
                             name="expense_date"

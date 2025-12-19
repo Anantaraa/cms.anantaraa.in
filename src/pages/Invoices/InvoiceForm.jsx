@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '../../services/api';
+import { formatApiDate, formatInputDate, getTodayApiDate } from '../../utils/dateUtils';
 import './InvoiceForm.css';
 
 export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
@@ -11,22 +12,32 @@ export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Get today's date in YYYY-MM-DD format
-    const getTodayDate = () => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    };
-
     const [formData, setFormData] = useState({
-        invoice_number: initialData?.invoiceNumber || initialData?.invoice_number || '',
-        client_id: initialData?.clientId || initialData?.client_id || '',
-        project_id: initialData?.projectId || initialData?.project_id || '',
-        generated_date: initialData?.generatedDate || initialData?.generated_date || getTodayDate(),
-        due_date: initialData?.dueDate || initialData?.due_date || '',
-        amount: initialData?.amount || '',
-        status: initialData?.status || 'draft',
-        description: initialData?.description || '',
+        invoice_number: '',
+        client_id: '',
+        project_id: '',
+        generated_date: getTodayApiDate(),
+        due_date: '',
+        amount: '',
+        status: 'draft',
+        description: '',
     });
+
+    // Pre-populate form when initialData changes
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                invoice_number: initialData?.invoiceNumber || initialData?.invoice_number || '',
+                client_id: initialData?.clientId || initialData?.client_id || '',
+                project_id: initialData?.projectId || initialData?.project_id || '',
+                generated_date: formatInputDate(initialData?.generatedDate || initialData?.generated_date) || getTodayApiDate(),
+                due_date: formatInputDate(initialData?.dueDate || initialData?.due_date) || '',
+                amount: initialData?.amount || '',
+                status: initialData?.status || 'draft',
+                description: initialData?.description || '',
+            });
+        }
+    }, [initialData]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -77,13 +88,13 @@ export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
         e.preventDefault();
         setLoading(true);
         try {
-            // Clean payload - only send fields the backend expects
+            // Clean payload - convert dates to API format (dd/mm/yyyy)
             const payload = {
                 invoice_number: formData.invoice_number,
                 client_id: formData.client_id,
                 project_id: formData.project_id,
-                generated_date: formData.generated_date,
-                due_date: formData.due_date,
+                generated_date: formatApiDate(formData.generated_date),
+                due_date: formatApiDate(formData.due_date),
                 amount: Number(formData.amount),
                 status: formData.status,
                 description: formData.description,
@@ -153,12 +164,12 @@ export default function InvoiceForm({ initialData, onSuccess, onCancel }) {
                         </div>
 
                         <div className="form-field">
-                            <label>Invoice Date</label>
+                            <label>Invoice Date <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
                             <input type="date" name="generated_date" value={formData.generated_date} onChange={handleChange} required />
                         </div>
 
                         <div className="form-field">
-                            <label>Due Date</label>
+                            <label>Due Date <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#64748b' }}>(dd/mm/yyyy)</span></label>
                             <input type="date" name="due_date" value={formData.due_date} onChange={handleChange} required />
                         </div>
 

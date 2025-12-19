@@ -1,26 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Calendar, DollarSign, User, Briefcase, Edit2, Printer, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, DollarSign, User, Briefcase, Edit2, Printer, RefreshCw, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatDate } from '../../utils/dateUtils';
 import './InvoiceDetail.css';
 
-export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, onStatusUpdate, onPrint }) {
+export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, onStatusUpdate, onPrint, onClose, onDeleteSuccess }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [invoice, setInvoice] = useState(invoiceData || null);
     const [loading, setLoading] = useState(!invoiceData);
 
     useEffect(() => {
-        if (invoiceData) {
+        // Strategy: Stale-While-Revalidate
+        // Always fetch fresh data to ensure we have the full details (client name, project name, etc.)
+        // even if partial data was passed from a list view.
+
+        let initialLoadDone = false;
+        if (invoiceData && !initialLoadDone) {
             setInvoice(invoiceData);
             setLoading(false);
-            return;
+            initialLoadDone = true;
         }
 
+        const targetId = id || invoiceData?.id;
+
         const fetchInvoice = async () => {
+            if (!targetId) return;
             try {
-                const data = await api.invoices.getById(id);
+                if (!invoiceData) setLoading(true); // Only show loading if we have NO data at all
+                const data = await api.invoices.getById(targetId);
                 setInvoice(data);
             } catch (error) {
                 console.error('Failed to fetch invoice', error);
@@ -28,7 +37,8 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
                 setLoading(false);
             }
         };
-        if (id) fetchInvoice();
+
+        fetchInvoice();
     }, [id, invoiceData]);
 
     if (loading) return <div className="loading-state">Loading Invoice Details...</div>;
@@ -44,6 +54,26 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
 
     const handlePrint = () => {
         if (onPrint) onPrint(null, invoice);
+    };
+
+    const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await api.invoices.delete(invoice.id);
+            if (isDrawer && onDeleteSuccess) {
+                onDeleteSuccess(); // Refresh list and close drawer
+            } else if (isDrawer && onClose) {
+                onClose();
+            } else {
+                navigate('/invoices');
+            }
+        } catch (error) {
+            console.error('Failed to delete invoice', error);
+            alert('Failed to delete invoice');
+        }
     };
 
     return (
@@ -83,18 +113,31 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
                 <div className="info-card">
                     <h3>Invoice Information</h3>
                     <div className="info-list">
+
                         <div className="info-item">
                             <User size={18} />
                             <div>
                                 <div className="info-label">Client</div>
-                                <div className="info-value">{invoice.client}</div>
+                                <div
+                                    className={`info-value ${invoice.clientId ? 'clickable-link' : ''}`}
+                                    onClick={() => invoice.clientId && navigate(`/clients/${invoice.clientId}`)}
+                                    style={invoice.clientId ? { cursor: 'pointer', color: 'var(--primary-color)', fontWeight: 500 } : {}}
+                                >
+                                    {invoice.client || invoice.clientName || 'Unknown Client'}
+                                </div>
                             </div>
                         </div>
                         <div className="info-item">
                             <Briefcase size={18} />
                             <div>
                                 <div className="info-label">Project</div>
-                                <div className="info-value">{invoice.project}</div>
+                                <div
+                                    className={`info-value ${invoice.projectId ? 'clickable-link' : ''}`}
+                                    onClick={() => invoice.projectId && navigate(`/projects/${invoice.projectId}`)}
+                                    style={invoice.projectId ? { cursor: 'pointer', color: 'var(--primary-color)', fontWeight: 500 } : {}}
+                                >
+                                    {invoice.project || invoice.projectName || 'Unknown Project'}
+                                </div>
                             </div>
                         </div>
                         <div className="info-item">
@@ -140,6 +183,39 @@ export default function InvoiceDetail({ invoiceData, isDrawer = false, onEdit, o
                         </div>
                     </div>
                 )}
+                {/* Delete Action - Pushed to bottom */}
+                <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+                    <button
+                        onClick={handleDelete}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            width: '100%',
+                            padding: '10px',
+                            backgroundColor: '#fee2e2',
+                            color: '#ef4444',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fecaca';
+                            e.currentTarget.style.borderColor = '#fca5a5';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fee2e2';
+                            e.currentTarget.style.borderColor = '#fecaca';
+                        }}
+                    >
+                        <Trash2 size={16} />
+                        Delete Invoice
+                    </button>
+                </div>
             </div>
         </div>
     );

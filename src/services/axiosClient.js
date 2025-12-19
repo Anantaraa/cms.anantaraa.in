@@ -28,8 +28,8 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401) {
             // Token expired or invalid
             console.warn('Unauthorized access. Redirecting to login...');
-            // Optional: triggers logout or redirect logic here
-            // window.location.href = '/login'; 
+            localStorage.removeItem('token'); // Clear token
+            window.location.href = '/login';
         }
         return Promise.reject(error);
     }
