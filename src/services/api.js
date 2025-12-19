@@ -45,7 +45,6 @@ const mappers = {
         id: data.id,
         name: data.name || 'Unknown Client',
         email: data.email || '',
-        phone: data.contact_number || '',
         contactNumber: data.contact_number || '',
         budget: data.budget || 0,
         status: data.status || 'active',
@@ -82,16 +81,14 @@ const mappers = {
     project: (data) => ({
         id: data.id,
         name: data.name || 'Untitled Project',
-        client: data.client?.name || data.client_name || data.client || 'Unknown',
+        client: data.client_name || data.clients?.name || 'Unknown',
         clientId: data.client_id,
         clientName: data.client_name || data.clients?.name || '',
         status: data.status || 'planned',
         startDate: data.start_date || '',
         expectedEndDate: data.expected_end_date || '',
-        endDate: data.expected_end_date || '',
         completion: data.completion || 0,
         projectValue: Number(data.project_value || 0),
-        budget: Number(data.project_value || 0),
         location: data.location || '',
         type: data.type || '',
         income: Number(data.income || 0),
@@ -141,13 +138,12 @@ const mappers = {
         invoiceNumber: data.invoice_number || '',
         amount: data.amount || 0,
         generatedDate: data.generated_date || '',
-        date: data.generated_date || '',
         dueDate: data.due_date || '',
         status: data.status || 'draft',
-        client: data.client?.name || data.client_name || data.clients?.name || 'Unknown',
+        client: data.client_name || data.clients?.name || 'Unknown',
         clientId: data.client_id,
         clientName: data.client_name || data.clients?.name || '',
-        project: data.project?.name || data.project_name || data.projects?.name || '',
+        project: data.project_name || data.projects?.name || '',
         projectId: data.project_id,
         projectName: data.project_name || data.projects?.name || '',
         description: data.description || '',
@@ -177,7 +173,6 @@ const mappers = {
     }),
     expense: (data) => ({
         id: data.id,
-        date: data.expense_date || '',
         expenseDate: data.expense_date || '',
         description: data.description || '',
         amount: data.amount || 0,
@@ -187,8 +182,9 @@ const mappers = {
         projectId: data.project_id || '',
         projectName: data.project_name || data.projects?.name || '',
         project: data.project_name || data.projects?.name || '',
-        clientId: data.project_id ? (data.projects?.client_id || data.projects?.clients?.id || '') : '',
-        client: data.projects?.clients?.name || '',
+        clientId: data.projects?.client_id || '',
+        client: data.client_name || data.projects?.clients?.name || '',
+        clientName: data.client_name || data.projects?.clients?.name || '',
         organizationId: data.organization_id || null,
         createdAt: data.created_at || '',
         updatedAt: data.updated_at || '',
@@ -213,18 +209,17 @@ const mappers = {
     }),
     income: (data) => ({
         id: data.id,
-        date: data.received_date || '',
         receivedDate: data.received_date || '',
-        amount: data.amount_received || 0,
         amountReceived: data.amount_received || 0,
         paymentMethod: data.payment_method || '',
-        method: data.payment_method || '',
         status: data.status || 'received',
         description: data.description || '',
         invoiceId: data.invoice_id || null,
-        invoiceNumber: data.invoices?.invoice_number || '',
-        client: data.invoices?.clients?.name || '',
-        project: data.invoices?.projects?.name || '',
+        invoiceNumber: data.invoice_number || data.invoices?.invoice_number || '',
+        client: data.client_name || data.invoices?.clients?.name || '',
+        clientName: data.client_name || data.invoices?.clients?.name || '',
+        project: data.project_name || data.invoices?.projects?.name || '',
+        projectName: data.project_name || data.invoices?.projects?.name || '',
         organizationId: data.organization_id || null,
         createdAt: data.created_at || '',
         updatedAt: data.updated_at || '',
@@ -245,6 +240,61 @@ const mappers = {
                 name: data.invoices.projects.name
             } : null
         } : null
+    }),
+    projectSummary: (data) => ({
+        project: data.project ? {
+            id: data.project.id,
+            name: data.project.name,
+            clientName: data.project.clients?.name || '',
+            startDate: data.project.start_date || '',
+            expectedEndDate: data.project.expected_end_date || '',
+            projectValue: data.project.project_value || 0,
+            status: data.project.status || ''
+        } : null,
+        financials: {
+            totalInvoiced: data.financials?.total_invoiced || 0,
+            totalCollected: data.financials?.total_collected || 0,
+            totalExpenses: data.financials?.total_expenses || 0,
+            netIncome: data.financials?.net_income || 0,
+            outstandingAmount: data.financials?.outstanding_amount || 0
+        },
+        stats: {
+            invoiceCount: data.stats?.invoice_count || 0,
+            expenseCount: data.stats?.expense_count || 0
+        }
+    }),
+    clientSummary: (data) => ({
+        client: data.client ? {
+            id: data.client.id,
+            name: data.client.name,
+            email: data.client.email || '',
+            contactNumber: data.client.contact_number || '',
+            address: data.client.address || '',
+            status: data.client.status || ''
+        } : null,
+        financials: {
+            totalInvoiced: data.financials?.total_invoiced || 0,
+            totalCollected: data.financials?.total_collected || 0,
+            netIncome: data.financials?.net_income || 0,
+            outstandingAmount: data.financials?.outstanding_amount || 0
+        },
+        stats: {
+            projectCount: data.stats?.project_count || 0,
+            invoiceCount: data.stats?.invoice_count || 0
+        }
+    }),
+    dashboardSummary: (data) => ({
+        totalClients: data.totalClients || 0,
+        totalProjects: data.totalProjects || 0,
+        financials: {
+            revenue: data.financials?.revenue || 0,
+            expenses: data.financials?.expenses || 0,
+            profit: data.financials?.profit || 0,
+            outstanding: data.financials?.outstanding || 0
+        },
+        widgets: {
+            pendingInvoices: data.widgets?.pending_invoices || 0
+        }
     })
 };
 
@@ -265,11 +315,11 @@ export const api = {
 
                 // Calculate stats
                 const totalClients = clientData.length;
-                const activeClients = clientData.filter(c => c.status === 'Active').length;
+                const activeClients = clientData.filter(c => c.status === 'active').length;
 
-                const runningProjects = projectData.filter(p => p.status === 'Ongoing' || p.status === 'In Progress').length;
-                const notStartedProjects = projectData.filter(p => p.status === 'Planned' || p.status === 'Not Started').length;
-                const completedProjects = projectData.filter(p => p.status === 'Completed').length;
+                const runningProjects = projectData.filter(p => p.status === 'ongoing').length;
+                const notStartedProjects = projectData.filter(p => p.status === 'planned').length;
+                const completedProjects = projectData.filter(p => p.status === 'completed').length;
 
                 const outstandingInvoices = invoiceData.filter(i => i.status === 'sent' || i.status === 'overdue');
                 const outstandingInvoicesCount = outstandingInvoices.length;
@@ -384,8 +434,8 @@ export const api = {
 
     // Reports
     reports: {
-        getProjectSummary: (id) => handleRequest(apiClient.get(`/api/v1/reports/projects/${id}/summary`)),
-        getClientSummary: (id) => handleRequest(apiClient.get(`/api/v1/reports/clients/${id}/summary`)),
-        getDashboardSummary: () => handleRequest(apiClient.get('/api/v1/reports/dashboard'))
+        getProjectSummary: (id) => handleRequest(apiClient.get(`/api/v1/reports/projects/${id}/summary`), mappers.projectSummary),
+        getClientSummary: (id) => handleRequest(apiClient.get(`/api/v1/reports/clients/${id}/summary`), mappers.clientSummary),
+        getDashboardSummary: () => handleRequest(apiClient.get('/api/v1/reports/dashboard'), mappers.dashboardSummary)
     }
 };

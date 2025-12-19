@@ -6,6 +6,8 @@ import MainLayout from './layouts/MainLayout';
 import InvoiceForm from './pages/Invoices/InvoiceForm';
 import ExpenseForm from './pages/Finance/ExpenseForm';
 import IncomeForm from './pages/Finance/IncomeForm';
+import IncomeDetail from './pages/Finance/IncomeDetail';
+import ExpenseDetail from './pages/Finance/ExpenseDetail';
 
 // Pages
 import Login from './pages/Login';
@@ -48,8 +50,10 @@ function App() {
                     <Route path="invoices/new" element={<InvoiceForm />} />
                     <Route path="income" element={<IncomeList />} />
                     <Route path="income/new" element={<IncomeForm />} />
+                    <Route path="income/:id" element={<IncomeDetail />} />
                     <Route path="expenses" element={<ExpenseList />} />
                     <Route path="expenses/new" element={<ExpenseForm />} />
+                    <Route path="expenses/:id" element={<ExpenseDetail />} />
                     <Route path="reports" element={<Reports />} />
                 </Route>
             </Routes>

@@ -16,6 +16,13 @@ export default function ProjectList() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
 
+    // Date Filter State
+    const [filterModalOpen, setFilterModalOpen] = useState(false);
+    const [dateFilters, setDateFilters] = useState({
+        dateFrom: '',
+        dateTo: ''
+    });
+
     // Drawer State
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerMode, setDrawerMode] = useState('view'); // 'view' or 'edit'
@@ -81,6 +88,26 @@ export default function ProjectList() {
         handleDrawerClose();
     };
 
+    const handleDeleteSuccess = () => {
+        loadProjects();
+        handleDrawerClose();
+    };
+
+    const handleNestedItemChange = async () => {
+        // When a nested item (client/invoice) is modified/deleted, refresh the selected project
+        if (selectedProject && selectedProject.id) {
+            try {
+                const freshProject = await api.projects.getById(selectedProject.id);
+                setSelectedProject(freshProject);
+                // Return to project view after nested item change
+                setViewSubMode('project');
+                setSubViewData(null);
+            } catch (error) {
+                console.error('Failed to refresh project data', error);
+            }
+        }
+    };
+
     // --- Action Handlers --- (toggleMenu, openStatusModal, handleUpdateStatus...)
     const toggleMenu = (e, id) => {
         if (e && e.stopPropagation) e.stopPropagation();
@@ -104,7 +131,7 @@ export default function ProjectList() {
     const handleUpdateStatus = async () => {
         if (!statusProject || !newStatus) return;
         try {
-            await api.projects.update(statusProject.id, { ...statusProject, status: newStatus });
+            await api.projects.update(statusProject.id, { status: newStatus });
             setStatusModalOpen(false);
             setStatusProject(null);
             loadProjects();
@@ -153,9 +180,43 @@ export default function ProjectList() {
         'Halted': 'red'
     };
 
-    const filteredProjects = filter === 'All'
-        ? projects
-        : projects.filter(p => p.status === filter);
+    // Apply filters
+    const applyFilters = (projectList) => {
+        let result = projectList;
+
+        // Status filter (from tabs)
+        if (filter !== 'All') {
+            result = result.filter(p => p.status === filter);
+        }
+
+        // Date range filter
+        if (dateFilters.dateFrom || dateFilters.dateTo) {
+            result = result.filter(p => {
+                const projectStartDate = new Date(p.startDate);
+                if (dateFilters.dateFrom && projectStartDate < new Date(dateFilters.dateFrom)) {
+                    return false;
+                }
+                if (dateFilters.dateTo && projectStartDate > new Date(dateFilters.dateTo)) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        return result;
+    };
+
+    const filteredProjects = applyFilters(projects);
+
+    const handleDateFilterChange = (type, value) => {
+        setDateFilters({ ...dateFilters, [type]: value });
+    };
+
+    const clearDateFilters = () => {
+        setDateFilters({ dateFrom: '', dateTo: '' });
+    };
+
+    const activeDateFilterCount = (dateFilters.dateFrom ? 1 : 0) + (dateFilters.dateTo ? 1 : 0);
 
     return (
         <div className="project-list-page">
@@ -172,9 +233,28 @@ export default function ProjectList() {
                         </button>
                     ))}
                 </div>
-                <button className="btn-primary" onClick={handleNewProject}>
-                    <Plus size={18} /> New Project
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn-secondary" onClick={() => setFilterModalOpen(true)}>
+                        <Filter size={18} />
+                        Date Filter
+                        {activeDateFilterCount > 0 && (
+                            <span style={{
+                                marginLeft: '6px',
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                borderRadius: '10px',
+                                padding: '2px 6px',
+                                fontSize: '11px',
+                                fontWeight: '600'
+                            }}>
+                                {activeDateFilterCount}
+                            </span>
+                        )}
+                    </button>
+                    <button className="btn-primary" onClick={handleNewProject}>
+                        <Plus size={18} /> New Project
+                    </button>
+                </div>
             </div>
 
             {/* ... Grid ... */}
@@ -217,7 +297,7 @@ export default function ProjectList() {
 
                         <div className="project-dates">
                             <Calendar size={14} />
-                            <span>{formatDate(project.startDate)} — {formatDate(project.endDate)}</span>
+                            <span>{formatDate(project.startDate)} — {formatDate(project.expectedEndDate)}</span>
                         </div>
 
                         <div className="project-progress">
@@ -237,6 +317,47 @@ export default function ProjectList() {
                 ))}
             </div>
 
+            {/* Date Filter Modal */}
+            {filterModalOpen && (
+                <div className="modal-overlay" onClick={() => setFilterModalOpen(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <div className="modal-header">
+                            <h3>Filter by Date Range</h3>
+                            <button onClick={() => setFilterModalOpen(false)}><X size={18} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>Start Date Range</label>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>From</label>
+                                        <input
+                                            type="date"
+                                            value={dateFilters.dateFrom}
+                                            onChange={(e) => handleDateFilterChange('dateFrom', e.target.value)}
+                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>To</label>
+                                        <input
+                                            type="date"
+                                            value={dateFilters.dateTo}
+                                            onChange={(e) => handleDateFilterChange('dateTo', e.target.value)}
+                                            style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={clearDateFilters}>Clear All</button>
+                            <button className="btn-primary" onClick={() => setFilterModalOpen(false)}>Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Status Modal */}
             {statusModalOpen && (
                 <div className="modal-overlay" onClick={() => setStatusModalOpen(false)}>
@@ -252,10 +373,10 @@ export default function ProjectList() {
                                 onChange={(e) => setNewStatus(e.target.value)}
                                 className="status-select"
                             >
-                                <option value="Planning">Planning</option>
-                                <option value="Ongoing">Ongoing</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Halted">Halted</option>
+                                <option value="planned">Planning</option>
+                                <option value="ongoing">Ongoing</option>
+                                <option value="completed">Completed</option>
+                                <option value="paused">Paused</option>
                             </select>
                         </div>
                         <div className="modal-actions">
@@ -274,15 +395,38 @@ export default function ProjectList() {
                 width="50%"
             >
                 {drawerMode === 'view' && selectedProject && (
-                    <ProjectDetail
-                        projectData={selectedProject}
-                        isDrawer={true}
-                        onEdit={handleEditProject}
-                        onStatusUpdate={openStatusModal}
-                        activeView={viewSubMode}
-                        subViewData={subViewData}
-                        onNavigate={handleNestedNavigate}
-                    />
+                    <>
+                        {viewSubMode === 'project' && (
+                            <ProjectDetail
+                                projectData={selectedProject}
+                                isDrawer={true}
+                                onEdit={handleEditProject}
+                                onStatusUpdate={openStatusModal}
+                                activeView={viewSubMode}
+                                subViewData={subViewData}
+                                onNavigate={handleNestedNavigate}
+                                onClose={handleDrawerClose}
+                                onDeleteSuccess={handleDeleteSuccess}
+                            />
+                        )}
+                        {viewSubMode === 'client' && (
+                            <ClientDetail
+                                clientData={subViewData}
+                                isDrawer={true}
+                                isNested={true}
+                                onEdit={(e, client) => handleNestedNavigate('edit-client', client)}
+                                onDeleteSuccess={handleNestedItemChange}
+                            />
+                        )}
+                        {viewSubMode === 'invoice' && (
+                            <InvoiceDetail
+                                invoiceData={subViewData}
+                                isDrawer={true}
+                                onEdit={(e, invoice) => handleNestedNavigate('edit-invoice', invoice)}
+                                onDeleteSuccess={handleNestedItemChange}
+                            />
+                        )}
+                    </>
                 )}
                 {drawerMode === 'edit' && (
                     <>
@@ -297,9 +441,8 @@ export default function ProjectList() {
                             <ClientForm
                                 initialData={subViewData}
                                 onSuccess={() => {
-                                    // Maybe refresh projects too if client name changed?
-                                    setDrawerMode('view'); // Go back to viewing client
-                                    // Ideally refresh client data
+                                    // Refresh project after client changes
+                                    handleNestedItemChange();
                                 }}
                                 onCancel={() => setDrawerMode('view')}
                             />
@@ -307,7 +450,10 @@ export default function ProjectList() {
                         {viewSubMode === 'invoice' && (
                             <InvoiceForm
                                 initialData={subViewData}
-                                onSuccess={() => setDrawerMode('view')}
+                                onSuccess={() => {
+                                    // Refresh project after invoice changes
+                                    handleNestedItemChange();
+                                }}
                                 onCancel={() => setDrawerMode('view')}
                             />
                         )}

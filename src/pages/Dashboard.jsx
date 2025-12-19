@@ -15,21 +15,37 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [clientsData, projectsData, invoicesData] = await Promise.all([
+        const [clientsData, projectsData, invoicesData, incomeData, expenseData] = await Promise.all([
           api.clients.getAll(),
           api.projects.getAll(),
-          api.invoices.getAll()
+          api.invoices.getAll(),
+          api.income.getAll(),
+          api.expenses.getAll()
         ]);
 
         // Calculate Stats
         const totalClients = clientsData.length;
-        const activeClients = clientsData.filter(c => c.status === 'Active').length;
+        const activeClients = clientsData.filter(c => c.status === 'active' || c.status === 'Active').length;
 
-        const runningProjects = projectsData.filter(p => p.status === 'Ongoing' || p.status === 'In Progress').length;
-        const notStartedProjects = projectsData.filter(p => p.status === 'Planned' || p.status === 'Not Started').length;
-        const completedProjects = projectsData.filter(p => p.status === 'Completed').length;
+        const runningProjects = projectsData.filter(p => {
+          const status = p.status?.toLowerCase();
+          return status === 'ongoing' || status === 'in progress';
+        }).length;
 
-        const outstandingInvoicesList = invoicesData.filter(i => i.status === 'pending' || i.status === 'overdue');
+        const notStartedProjects = projectsData.filter(p => {
+          const status = p.status?.toLowerCase();
+          return status === 'planned' || status === 'not started';
+        }).length;
+
+        const completedProjects = projectsData.filter(p => {
+          const status = p.status?.toLowerCase();
+          return status === 'completed';
+        }).length;
+
+        const outstandingInvoicesList = invoicesData.filter(i => {
+          const status = i.status?.toLowerCase();
+          return status === 'pending' || status === 'overdue' || status === 'sent' || status === 'draft';
+        });
         const outstandingInvoicesCount = outstandingInvoicesList.length;
         const outstandingInvoicesAmount = outstandingInvoicesList.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
 
@@ -43,20 +59,36 @@ export default function Dashboard() {
           outstandingInvoicesAmount
         });
 
-        // Calculate Profitability
-        const profData = projectsData
-          .map(p => ({
-            id: p.id,
-            name: p.name,
-            income: Number(p.income) || 0,
-            expense: Number(p.expense) || 0,
-            profit: (Number(p.income) || 0) - (Number(p.expense) || 0)
-          }))
+        // Calculate Profitability from real income and expense data
+        const profitabilityByProject = projectsData.map(project => {
+          // Sum all income for this project
+          const projectIncome = incomeData
+            .filter(inc => inc.projectId === project.id || inc.project_id === project.id)
+            .reduce((sum, inc) => sum + (Number(inc.amount) || Number(inc.amountReceived) || 0), 0);
+
+          // Sum all expenses for this project
+          const projectExpense = expenseData
+            .filter(exp => exp.projectId === project.id || exp.project_id === project.id)
+            .reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+
+          return {
+            id: project.id,
+            name: project.name,
+            income: projectIncome,
+            expense: projectExpense,
+            profit: projectIncome - projectExpense
+          };
+        });
+
+        // Sort by profit and take top 5
+        const topProfitableProjects = profitabilityByProject
+          .filter(p => p.income > 0 || p.expense > 0) // Only show projects with financial activity
           .sort((a, b) => b.profit - a.profit)
           .slice(0, 5);
-        setProfitabilityData(profData);
 
-        // Get Outstanding Invoices for List
+        setProfitabilityData(topProfitableProjects);
+
+        // Get Outstanding Invoices for List (top 5 most urgent)
         setInvoices(outstandingInvoicesList.slice(0, 5));
 
       } catch (error) {
