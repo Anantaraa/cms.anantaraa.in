@@ -1,10 +1,11 @@
+// fixed header
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, MapPin, Building, FileText, RefreshCw, Edit2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Building, FileText, RefreshCw, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import './ClientDetail.css';
 
-export default function ClientDetail({ clientData, isDrawer = false, onEdit, onStatusUpdate, onNavigate }) {
+export default function ClientDetail({ clientData, isDrawer = false, onEdit, onStatusUpdate, onNavigate, onClose, onDeleteSuccess }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [client, setClient] = useState(clientData || null);
@@ -19,42 +20,40 @@ export default function ClientDetail({ clientData, isDrawer = false, onEdit, onS
         if (onStatusUpdate) onStatusUpdate(null, client);
     };
 
+    const refreshClientData = async () => {
+        const targetId = id || clientData?.id || client?.id;
+        if (!targetId) return;
+
+        try {
+            const freshData = await api.clients.getById(targetId);
+            setClient(freshData);
+        } catch (error) {
+            console.error('Failed to refresh client data', error);
+        }
+    };
+
     useEffect(() => {
+        // Strategy: Stale-While-Revalidate
+        // Always fetch fresh data to ensure nested relations (projects, invoices) are present.
+
+        let initialLoadDone = false;
+        if (clientData && !initialLoadDone) {
+            setClient(clientData);
+            setLoading(false);
+            initialLoadDone = true;
+        }
+
+        const targetId = id || clientData?.id;
+
         const loadData = async () => {
+            if (!targetId) return;
+
             try {
-                // If we have full data passed in, use it, but we might still need to fetch related items if they are missing
-                let currentClient = clientData;
+                if (!clientData) setLoading(true);
 
-                if (!currentClient && id) {
-                    currentClient = await api.clients.getById(id);
-                }
+                const fullClientData = await api.clients.getById(targetId);
+                setClient(fullClientData);
 
-                if (currentClient) {
-                    // Fetch related data if not present
-                    if (!currentClient.projects || !currentClient.invoices) {
-                        const [allProjects, allInvoices] = await Promise.all([
-                            api.projects.getAll(),
-                            api.invoices.getAll()
-                        ]);
-
-                        const relatedProjects = allProjects.filter(p =>
-                            String(p.clientId) === String(currentClient.id) ||
-                            p.client === currentClient.name
-                        );
-
-                        const relatedInvoices = allInvoices.filter(inv =>
-                            String(inv.clientId) === String(currentClient.id) ||
-                            inv.client === currentClient.name
-                        );
-
-                        currentClient = {
-                            ...currentClient,
-                            projects: relatedProjects,
-                            invoices: relatedInvoices
-                        };
-                    }
-                    setClient(currentClient);
-                }
             } catch (error) {
                 console.error('Failed to load client data', error);
             } finally {
@@ -64,6 +63,26 @@ export default function ClientDetail({ clientData, isDrawer = false, onEdit, onS
 
         loadData();
     }, [id, clientData]);
+
+    const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await api.clients.delete(client.id);
+            if (isDrawer && onDeleteSuccess) {
+                onDeleteSuccess(); // Refresh list and close drawer
+            } else if (isDrawer && onClose) {
+                onClose();
+            } else {
+                navigate('/clients');
+            }
+        } catch (error) {
+            console.error('Failed to delete client', error);
+            alert('Failed to delete client');
+        }
+    };
 
     if (loading) return <div className="loading-state">Loading Client Details...</div>;
     if (!client) return <div className="error-state">Client not found</div>;
@@ -106,7 +125,7 @@ export default function ClientDetail({ clientData, isDrawer = false, onEdit, onS
                         </div>
                         <div className="info-item">
                             <Phone size={18} />
-                            <span>{client.phone}</span>
+                            <span>{client.contactNumber || client.phone || 'No phone provided'}</span>
                         </div>
                         <div className="info-item">
                             <MapPin size={18} />
@@ -140,8 +159,14 @@ export default function ClientDetail({ clientData, isDrawer = false, onEdit, onS
                                 <div
                                     key={p.id}
                                     className="list-item clickable"
-                                    onClick={() => onNavigate && onNavigate('project', p)}
-                                    style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                                    onClick={() => {
+                                        if (onNavigate) {
+                                            onNavigate('project', p);
+                                        } else {
+                                            navigate(`/projects/${p.id}`);
+                                        }
+                                    }}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <span className="item-name">{p.name}</span>
                                     <span className="item-meta">{p.status}</span>
@@ -161,8 +186,14 @@ export default function ClientDetail({ clientData, isDrawer = false, onEdit, onS
                                 <div
                                     key={inv.id}
                                     className="list-item clickable"
-                                    onClick={() => onNavigate && onNavigate('invoice', inv)}
-                                    style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                                    onClick={() => {
+                                        if (onNavigate) {
+                                            onNavigate('invoice', inv);
+                                        } else {
+                                            navigate(`/invoices/${inv.id}`);
+                                        }
+                                    }}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <span className="item-name">{inv.invoiceNumber || inv.id?.substring(0, 8) + '...'}</span>
                                     <span className="item-amount">₹{inv.amount.toLocaleString()}</span>
@@ -170,6 +201,39 @@ export default function ClientDetail({ clientData, isDrawer = false, onEdit, onS
                                 </div>
                             ))}
                             {(!client.invoices || client.invoices.length === 0) && <p className="empty-text">No invoices found.</p>}
+                        </div>
+                        {/* Delete Action - Pushed to bottom */}
+                        <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+                            <button
+                                onClick={handleDelete}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    width: '100%',
+                                    padding: '10px',
+                                    backgroundColor: '#fee2e2',
+                                    color: '#ef4444',
+                                    border: '1px solid #fecaca',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#fecaca';
+                                    e.currentTarget.style.borderColor = '#fca5a5';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#fee2e2';
+                                    e.currentTarget.style.borderColor = '#fecaca';
+                                }}
+                            >
+                                <Trash2 size={16} />
+                                Delete Client
+                            </button>
                         </div>
                     </div>
                 </div>

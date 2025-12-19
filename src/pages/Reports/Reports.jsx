@@ -1,26 +1,113 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Download } from 'lucide-react';
+import { api } from '../../services/api';
 import './Reports.css';
 
 export default function Reports() {
-    // Mock data for reports
-    const monthlyData = [
-        { name: 'Jan', income: 4000, expense: 2400 },
-        { name: 'Feb', income: 3000, expense: 1398 },
-        { name: 'Mar', income: 2000, expense: 9800 },
-        { name: 'Apr', income: 2780, expense: 3908 },
-        { name: 'May', income: 1890, expense: 4800 },
-        { name: 'Jun', income: 2390, expense: 3800 },
-    ];
+    const [loading, setLoading] = useState(true);
+    const [monthlyData, setMonthlyData] = useState([]);
+    const [projectStatusData, setProjectStatusData] = useState([]);
+    const [summaryMetrics, setSummaryMetrics] = useState(null);
 
-    const projectStatusData = [
-        { name: 'Ongoing', value: 5 },
-        { name: 'Completed', value: 12 },
-        { name: 'Planning', value: 3 },
-        { name: 'Halted', value: 1 },
-    ];
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+    useEffect(() => {
+        const fetchReportsData = async () => {
+            try {
+                const [incomeData, expenseData, projectsData, invoicesData] = await Promise.all([
+                    api.income.getAll(),
+                    api.expenses.getAll(),
+                    api.projects.getAll(),
+                    api.invoices.getAll()
+                ]);
+
+                // Calculate monthly income and expenses (last 6 months)
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const currentDate = new Date();
+                const last6Months = [];
+
+                for (let i = 5; i >= 0; i--) {
+                    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+                    const monthName = monthNames[date.getMonth()];
+                    const year = date.getFullYear();
+                    const month = date.getMonth();
+
+                    // Calculate income for this month
+                    const monthIncome = incomeData
+                        .filter(inc => {
+                            // Parse date (assuming dd/mm/yyyy format from API)
+                            const dateStr = inc.receivedDate || inc.date;
+                            if (!dateStr) return false;
+                            const [day, monthPart, yearPart] = dateStr.split('/');
+                            const incDate = new Date(yearPart, monthPart - 1, day);
+                            return incDate.getMonth() === month && incDate.getFullYear() === year;
+                        })
+                        .reduce((sum, inc) => sum + (Number(inc.amount) || Number(inc.amountReceived) || 0), 0);
+
+                    // Calculate expenses for this month
+                    const monthExpense = expenseData
+                        .filter(exp => {
+                            const dateStr = exp.expenseDate || exp.date;
+                            if (!dateStr) return false;
+                            const [day, monthPart, yearPart] = dateStr.split('/');
+                            const expDate = new Date(yearPart, monthPart - 1, day);
+                            return expDate.getMonth() === month && expDate.getFullYear() === year;
+                        })
+                        .reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+
+                    last6Months.push({
+                        name: monthName,
+                        income: monthIncome,
+                        expense: monthExpense
+                    });
+                }
+
+                setMonthlyData(last6Months);
+
+                // Calculate project status distribution
+                const statusCounts = {};
+                projectsData.forEach(project => {
+                    const status = project.status || 'Unknown';
+                    statusCounts[status] = (statusCounts[status] || 0) + 1;
+                });
+
+                const statusData = Object.entries(statusCounts).map(([name, value]) => ({
+                    name,
+                    value
+                }));
+
+                setProjectStatusData(statusData);
+
+                // Calculate summary metrics
+                const totalIncome = incomeData.reduce((sum, inc) => sum + (Number(inc.amount) || Number(inc.amountReceived) || 0), 0);
+                const totalExpense = expenseData.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+                const profit = totalIncome - totalExpense;
+                const profitMargin = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : 0;
+                const avgProjectValue = projectsData.length > 0
+                    ? projectsData.reduce((sum, p) => sum + (Number(p.projectValue) || Number(p.project_value) || 0), 0) / projectsData.length
+                    : 0;
+
+                setSummaryMetrics({
+                    totalIncome,
+                    totalExpense,
+                    profitMargin,
+                    avgProjectValue
+                });
+
+            } catch (error) {
+                console.error('Failed to fetch reports data', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReportsData();
+    }, []);
+
+    if (loading) {
+        return <div className="dashboard-loading">Loading Reports...</div>;
+    }
 
     return (
         <div className="reports-page">
@@ -83,20 +170,22 @@ export default function Reports() {
                     <h3>Summary Metrics</h3>
                     <div className="metrics-list">
                         <div className="metric-item">
-                            <span className="label">YTD Income</span>
-                            <span className="value">₹12,45,000</span>
+                            <span className="label">Total Income</span>
+                            <span className="value">₹{summaryMetrics?.totalIncome?.toLocaleString() || '0'}</span>
                         </div>
                         <div className="metric-item">
-                            <span className="label">YTD Expense</span>
-                            <span className="value">₹4,50,000</span>
+                            <span className="label">Total Expense</span>
+                            <span className="value">₹{summaryMetrics?.totalExpense?.toLocaleString() || '0'}</span>
                         </div>
                         <div className="metric-item">
                             <span className="label">Profit Margin</span>
-                            <span className="value success">63.8%</span>
+                            <span className={`value ${Number(summaryMetrics?.profitMargin) > 0 ? 'success' : 'error'}`}>
+                                {summaryMetrics?.profitMargin || '0'}%
+                            </span>
                         </div>
                         <div className="metric-item">
                             <span className="label">Avg. Project Value</span>
-                            <span className="value">₹32,00,000</span>
+                            <span className="value">₹{summaryMetrics?.avgProjectValue?.toLocaleString() || '0'}</span>
                         </div>
                     </div>
                 </div>
