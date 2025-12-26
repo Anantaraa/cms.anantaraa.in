@@ -41,15 +41,19 @@ export default function ProjectList() {
     const [newStatus, setNewStatus] = useState('');
 
     useEffect(() => {
-        loadProjects();
+        const controller = new AbortController();
+        loadProjects(controller.signal);
+        return () => controller.abort();
     }, []);
 
-    const loadProjects = async () => {
+    const loadProjects = async (signal) => {
         try {
-            const data = await api.projects.getAll();
+            const data = await api.projects.getAll({ signal });
             setProjects(data);
         } catch (error) {
-            console.error(error);
+            if (error.name !== 'CanceledError') {
+                console.error(error);
+            }
         } finally {
             setLoading(false);
         }

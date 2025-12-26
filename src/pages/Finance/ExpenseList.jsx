@@ -31,15 +31,19 @@ export default function ExpenseList() {
     const [activeMenu, setActiveMenu] = useState(null);
 
     useEffect(() => {
-        loadExpenses();
+        const controller = new AbortController();
+        loadExpenses(controller.signal);
+        return () => controller.abort();
     }, []);
 
-    const loadExpenses = async () => {
+    const loadExpenses = async (signal) => {
         try {
-            const data = await api.expenses.getAll();
+            const data = await api.expenses.getAll({ signal });
             setExpenses(data);
         } catch (error) {
-            console.error(error);
+            if (error.name !== 'CanceledError') {
+                console.error(error);
+            }
         } finally {
             setLoading(false);
         }

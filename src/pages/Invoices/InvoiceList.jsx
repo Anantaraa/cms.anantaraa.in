@@ -45,15 +45,19 @@ export default function InvoiceList() {
     const printRef = useRef();
 
     useEffect(() => {
-        loadInvoices();
+        const controller = new AbortController();
+        loadInvoices(controller.signal);
+        return () => controller.abort();
     }, []);
 
-    const loadInvoices = async () => {
+    const loadInvoices = async (signal) => {
         try {
-            const data = await api.invoices.getAll();
+            const data = await api.invoices.getAll({ signal });
             setInvoices(data);
         } catch (e) {
-            console.error(e);
+            if (e.name !== 'CanceledError') {
+                console.error(e);
+            }
         } finally {
             setLoading(false);
         }

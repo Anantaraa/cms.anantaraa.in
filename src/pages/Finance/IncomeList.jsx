@@ -31,15 +31,19 @@ export default function IncomeList() {
     const [activeMenu, setActiveMenu] = useState(null);
 
     useEffect(() => {
-        loadIncome();
+        const controller = new AbortController();
+        loadIncome(controller.signal);
+        return () => controller.abort();
     }, []);
 
-    const loadIncome = async () => {
+    const loadIncome = async (signal) => {
         try {
-            const data = await api.income.getAll();
+            const data = await api.income.getAll({ signal });
             setIncome(data);
         } catch (error) {
-            console.error(error);
+            if (error.name !== 'CanceledError') {
+                console.error(error);
+            }
         } finally {
             setLoading(false);
         }

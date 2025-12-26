@@ -29,14 +29,17 @@ export default function Dashboard() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchData = async () => {
       try {
         const [clientsData, projectsData, invoicesData, incomeData, expenseData] = await Promise.all([
-          api.clients.getAll(),
-          api.projects.getAll(),
-          api.invoices.getAll(),
-          api.income.getAll(),
-          api.expenses.getAll()
+          api.clients.getAll({ signal }),
+          api.projects.getAll({ signal }),
+          api.invoices.getAll({ signal }),
+          api.income.getAll({ signal }),
+          api.expenses.getAll({ signal })
         ]);
 
         // Calculate Stats
@@ -114,13 +117,19 @@ export default function Dashboard() {
         setProjects(projectsData);
 
       } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
+        if (error.name !== 'CanceledError') {
+          console.error("Failed to fetch dashboard data", error);
+        }
       } finally {
-        setLoading(false);
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+
+    return () => controller.abort();
   }, []);
 
   // Filter projects by status
