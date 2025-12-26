@@ -33,9 +33,11 @@ const handleListRequest = async (request, mapper = null) => {
         }
         // If data is null/undefined or not an array, return empty array for lists
         return [];
+        return [];
     } catch (error) {
+        // Re-throw so caller can handle (e.g. cancellation)
         console.error('API List Error:', error);
-        return []; // Fail safe to empty array
+        throw error;
     }
 };
 
@@ -389,47 +391,47 @@ export const api = {
 
     // Clients
     clients: {
-        getAll: () => handleListRequest(apiClient.get('/api/v1/clients'), mappers.client),
-        getById: (id) => handleRequest(apiClient.get(`/api/v1/clients/${id}`), mappers.client),
-        create: (data) => handleRequest(apiClient.post('/api/v1/clients', data), mappers.client),
-        update: (id, data) => handleRequest(apiClient.put(`/api/v1/clients/${id}`, data), mappers.client),
-        delete: (id) => handleRequest(apiClient.delete(`/api/v1/clients/${id}`))
+        getAll: (options) => handleListRequest(apiClient.get('/api/v1/clients', options), mappers.client),
+        getById: (id, options) => handleRequest(apiClient.get(`/api/v1/clients/${id}`, options), mappers.client),
+        create: (data, options) => handleRequest(apiClient.post('/api/v1/clients', data, options), mappers.client),
+        update: (id, data, options) => handleRequest(apiClient.put(`/api/v1/clients/${id}`, data, options), mappers.client),
+        delete: (id, options) => handleRequest(apiClient.delete(`/api/v1/clients/${id}`, options))
     },
 
     // Projects
     projects: {
-        getAll: () => handleListRequest(apiClient.get('/api/v1/projects'), mappers.project),
-        getById: (id) => handleRequest(apiClient.get(`/api/v1/projects/${id}`), mappers.project),
-        create: (data) => handleRequest(apiClient.post('/api/v1/projects', data), mappers.project),
-        update: (id, data) => handleRequest(apiClient.put(`/api/v1/projects/${id}`, data), mappers.project),
-        delete: (id) => handleRequest(apiClient.delete(`/api/v1/projects/${id}`))
+        getAll: (options) => handleListRequest(apiClient.get('/api/v1/projects', options), mappers.project),
+        getById: (id, options) => handleRequest(apiClient.get(`/api/v1/projects/${id}`, options), mappers.project),
+        create: (data, options) => handleRequest(apiClient.post('/api/v1/projects', data, options), mappers.project),
+        update: (id, data, options) => handleRequest(apiClient.put(`/api/v1/projects/${id}`, data, options), mappers.project),
+        delete: (id, options) => handleRequest(apiClient.delete(`/api/v1/projects/${id}`, options))
     },
 
     // Invoices
     invoices: {
-        getAll: () => handleListRequest(apiClient.get('/api/v1/invoices'), mappers.invoice),
-        getById: (id) => handleRequest(apiClient.get(`/api/v1/invoices/${id}`), mappers.invoice),
-        create: (data) => handleRequest(apiClient.post('/api/v1/invoices', data), mappers.invoice),
-        update: (id, data) => handleRequest(apiClient.put(`/api/v1/invoices/${id}`, data), mappers.invoice),
-        delete: (id) => handleRequest(apiClient.delete(`/api/v1/invoices/${id}`))
+        getAll: (options) => handleListRequest(apiClient.get('/api/v1/invoices', options), mappers.invoice),
+        getById: (id, options) => handleRequest(apiClient.get(`/api/v1/invoices/${id}`, options), mappers.invoice),
+        create: (data, options) => handleRequest(apiClient.post('/api/v1/invoices', data, options), mappers.invoice),
+        update: (id, data, options) => handleRequest(apiClient.put(`/api/v1/invoices/${id}`, data, options), mappers.invoice),
+        delete: (id, options) => handleRequest(apiClient.delete(`/api/v1/invoices/${id}`, options))
     },
 
     // Finance - Income
     income: {
-        getAll: () => handleListRequest(apiClient.get('/api/v1/income'), mappers.income),
-        getById: (id) => handleRequest(apiClient.get(`/api/v1/income/${id}`), mappers.income),
-        create: (data) => handleRequest(apiClient.post('/api/v1/income', data), mappers.income),
-        update: (id, data) => handleRequest(apiClient.put(`/api/v1/income/${id}`, data), mappers.income),
-        delete: (id) => handleRequest(apiClient.delete(`/api/v1/income/${id}`))
+        getAll: (options) => handleListRequest(apiClient.get('/api/v1/income', options), mappers.income),
+        getById: (id, options) => handleRequest(apiClient.get(`/api/v1/income/${id}`, options), mappers.income),
+        create: (data, options) => handleRequest(apiClient.post('/api/v1/income', data, options), mappers.income),
+        update: (id, data, options) => handleRequest(apiClient.put(`/api/v1/income/${id}`, data, options), mappers.income),
+        delete: (id, options) => handleRequest(apiClient.delete(`/api/v1/income/${id}`, options))
     },
 
     // Finance - Expenses
     expenses: {
-        getAll: () => handleListRequest(apiClient.get('/api/v1/expenses'), mappers.expense),
-        getById: (id) => handleRequest(apiClient.get(`/api/v1/expenses/${id}`), mappers.expense),
-        create: (data) => handleRequest(apiClient.post('/api/v1/expenses', data), mappers.expense),
-        update: (id, data) => handleRequest(apiClient.put(`/api/v1/expenses/${id}`, data), mappers.expense),
-        delete: (id) => handleRequest(apiClient.delete(`/api/v1/expenses/${id}`))
+        getAll: (options) => handleListRequest(apiClient.get('/api/v1/expenses', options), mappers.expense),
+        getById: (id, options) => handleRequest(apiClient.get(`/api/v1/expenses/${id}`, options), mappers.expense),
+        create: (data, options) => handleRequest(apiClient.post('/api/v1/expenses', data, options), mappers.expense),
+        update: (id, data, options) => handleRequest(apiClient.put(`/api/v1/expenses/${id}`, data, options), mappers.expense),
+        delete: (id, options) => handleRequest(apiClient.delete(`/api/v1/expenses/${id}`, options))
     },
 
     // Finance (Legacy - kept for backward compatibility)
