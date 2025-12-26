@@ -42,15 +42,19 @@ export default function ClientList() {
     const [newStatus, setNewStatus] = useState('');
 
     useEffect(() => {
-        loadClients();
+        const controller = new AbortController();
+        loadClients(controller.signal);
+        return () => controller.abort();
     }, []);
 
-    const loadClients = async () => {
+    const loadClients = async (signal) => {
         try {
-            const data = await api.clients.getAll();
+            const data = await api.clients.getAll({ signal });
             setClients(data);
         } catch (error) {
-            console.error('Failed to load clients', error);
+            if (error.name !== 'CanceledError') {
+                console.error('Failed to load clients', error);
+            }
         } finally {
             setLoading(false);
         }
